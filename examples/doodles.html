@@ -1,0 +1,186 @@
+<h1 id="what-is-the-fastest-unboxed-mutable-reference-yo">What is the fastest Unboxed Mutable Reference? Yo</h1>
+<p>MutableByteBuffer <a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> <br> I was profiling a simple loop. Here is a simpler version:</p>
+<pre class="sourceCode haskell"><code class="sourceCode haskell">countForever ref <span class="fu">=</span> forever <span class="fu">$</span> modifyIORef&#39; ref (<span class="fu">+</span><span class="dv">1</span>)</code></pre>
+<p>I counted 4 assembly instructions. <br> &quot;Addition takes 300 picoseconds, but there is memory access so let's say two nanoseconds,&quot; I thought.<br> To profile, I wrote:</p>
+<pre class="sourceCode haskell"><code class="sourceCode haskell">loopHundredMillion <span class="fu">=</span> replicateM_ <span class="dv">100000000</span>
+
+iorefLoop <span class="fu">=</span> <span class="kw">do</span>
+  ref <span class="ot">&lt;-</span> newIORef <span class="dv">0</span>
+  loopHundredMillion <span class="fu">$</span> modifyIORef&#39; ref (<span class="fu">+</span><span class="dv">1</span>)</code></pre>
+<p>I expected this to take ~ 1/5 <sup>th</sup> of a second. <br> It took <em>1 sec</em>. <br> Is five hundred million iterations an unrealistic top-line?<br> As a sanity check I wrote an analogous program in C.</p>
+<pre class="sourceCode c"><code class="sourceCode c"><span class="co">//CountForever.c</span>
+<span class="dt">int</span> main (<span class="dt">int</span> argc, <span class="dt">const</span> <span class="dt">char</span>** argv)
+{
+    <span class="dt">int</span> ref = <span class="dv">0</span>;
+    <span class="kw">while</span> (ref &lt; <span class="dv">1000000</span>)
+    {
+        ref++;
+    }
+}</code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">gcc</span> -O2 CountForever.c -oCountForever <span class="kw">&amp;&amp;</span> <span class="kw">time</span> ./CountForever
+
+<span class="kw">real</span> 0m0.002s
+<span class="kw">user</span> 0m0.001s
+<span class="kw">sys</span>  0m0.001s</code></pre>
+<p>This was faster then I expected:</p>
+<blockquote>
+<p>Maybe <strong>time</strong> isn't that accurate when programs are fast?</p>
+</blockquote>
+<p>On IRC <a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a></p>
+<pre><code class="irc">
+<span class="irc-name-jfischoff">jfischoff</span><span class="irc-tilde"> ~</span> <span class="irc-jfischoff">Is there anyway to make modifyIORef' faster? </span>
+<span class="irc-name-jfischoff">jfischoff</span><span class="irc-tilde"> ~ </span><span class="irc-jfischoff">I am surprised that in a second I was only able to update this ref</span>
+         <span class="irc-tilde">↪</span> <span class="irc-jfischoff">100 million times: timeout 1000000 $ forever $ modifyIORef' x (1+)</span>
+<span class="irc-name-jfischoff">jfischoff</span><span class="irc-tilde"> ~</span> <span class="irc-jfischoff">where as c++ was able to do the same in 4 milliseconds</span>
+<span class="irc-name-glguy">glguy</span><span class="irc-tilde">     ~</span> <span class="irc-glguy">c++ was able to do 1 update every 0.04 nanoseconds?</span>
+<span class="irc-name-glguy">glguy</span><span class="irc-tilde">     ~</span> <span class="irc-glguy">an update rate of 25 gigahertz?</span>
+<span class="irc-name-dv-">dv-</span><span class="irc-tilde">       ~</span> <span class="irc-dv-">gcc probably just <span class="irc-emphasis">replaced it with a constant</span></span>
+<span class="irc-name-jfischoff">jfischoff</span><span class="irc-tilde"> ~ </span><span class="irc-jfischoff">dv-: perhaps</span>
+<span class="irc-name-glguy">glguy</span><span class="irc-tilde">     ~</span> <span class="irc-glguy">That or C++ unlocks the fast mode of an Intel processor</span>
+</code>
+</pre>
+
+<p>Burn.</p>
+<pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">gcc</span> -02 CountForver.c -S</code></pre>
+<pre class="sourceCode nasm"><code class="sourceCode nasm"><span class="co">; CountForver.s</span>
+<span class="co">; Notice, there are no jumps or changes to the program counter.</span>
+<span class="co">; There is no looping.</span>
+<span class="fu">_main:</span>                                  
+    .cfi_startproc
+BB#<span class="dv">0</span>:
+    pushq   <span class="ot">%rbp</span>
+<span class="fu">Ltmp2:</span>
+    .cfi_def_cfa_offset <span class="dv">16</span>
+<span class="fu">Ltmp3:</span>
+    .cfi_offset <span class="ot">%rbp, -16</span>
+    <span class="kw">movq</span>    <span class="ot">%rsp, %rbp</span>
+<span class="fu">Ltmp4:</span>
+    .cfi_def_cfa_register <span class="ot">%rbp</span>
+    xorl    <span class="ot">%eax, %eax</span>
+    popq    <span class="ot">%rbp</span>
+    <span class="kw">ret</span>
+    .cfi_endproc</code></pre>
+<p>dv- was right. The compiler got rid of the loop, I'm assuming, because I wasn't using the result. <br> I added a <strong>volatile</strong> keyword to prevent optimizations.</p>
+<pre class="sourceCode c"><code class="sourceCode c"><span class="co">//CountForver.c</span>
+<span class="dt">int</span> main (<span class="dt">int</span> argc, <span class="dt">const</span> <span class="dt">char</span>** argv)
+{
+    <span class="dt">volatile</span> <span class="dt">int</span> ref = <span class="dv">0</span>;
+    <span class="kw">while</span> (ref &lt; <span class="dv">100000000</span>)
+    {
+        ref++;
+    }
+}</code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">gcc</span> -O2 CountForever.c -oCountForever <span class="kw">&amp;&amp;</span> <span class="kw">time</span> ./CountForever
+
+<span class="kw">real</span> 0m0.178s
+<span class="kw">user</span> 0m0.176s
+<span class="kw">sys</span>  0m0.001s</code></pre>
+<p>So C can do <em>greater</em> than <strong>500 million</strong> increments per second, but why stop there? What about assembly?</p>
+<pre class="sourceCode nasm"><code class="sourceCode nasm"><span class="co">; c0Un7f0r3v3r.asm</span>
+<span class="kw">EXTERN</span> _exit
+<span class="kw">GLOBAL</span> start
+
+<span class="kw">SECTION</span> .data
+  <span class="kw">align</span> <span class="dv">8</span>
+  iterationCount <span class="dt">DD</span> <span class="dv">100000000</span>
+  result <span class="dt">DD</span> <span class="dv">0</span>
+
+<span class="kw">SECTION</span> .text
+<span class="fu">start:</span>
+   <span class="co">; Copy the iteration count to the ecx register</span>
+   <span class="co">; which is used by the loopnz instruction</span>
+   <span class="kw">mov</span> <span class="kw">ecx</span>, [iterationCount]
+
+<span class="fu">loopBlock:</span>  
+   <span class="kw">inc</span> <span class="dt">dword</span> [result] <span class="co">; Increment the value at the address of result</span>
+   <span class="kw">loopnz</span> loopBlock   <span class="co">; Decrement the ecx counter and loop until ecx is zero</span>
+
+<span class="fu">exitBlock:</span>
+   <span class="kw">push</span> <span class="dt">dword</span> <span class="dv">0</span> <span class="co">; Set the exit code to zero</span>
+   <span class="kw">mov</span>  <span class="kw">eax</span>, <span class="dv">1</span>  <span class="co">; Place the system call number (exit) in the eax reg</span>
+   <span class="kw">sub</span>  <span class="kw">esp</span>, <span class="dv">4</span>  <span class="co">; I have to add some dummy space to the stack for some reason</span>
+   <span class="kw">int</span><span class="bn">  0x80    </span><span class="co">; Exit</span></code></pre>
+<pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">nasm</span> -fmacho c0n7f0r3v3r.asm <span class="kw">&amp;&amp;\</span>
+<span class="kw">&gt;</span> <span class="kw">ld</span> -macosx_version_min 10.7.0 -oc0n7f0r3v3r c0n7f0r3v3r.o <span class="kw">&amp;&amp;\</span>
+<span class="kw">&gt;</span> <span class="kw">time</span> ./c0Un7f0r3v3r<span class="kw">;</span>
+
+<span class="kw">real</span> 0m0.176s
+<span class="kw">user</span> 0m0.174s
+<span class="kw">sys</span>  0m0.001s</code></pre>
+<p>So IORef is about <em>five times slower</em> than naive approaches in C and assembly. <br> What gives? <br> To the Core!</p>
+<pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">ghc-core</span> -- -O2 IORefLoop.hs</code></pre>
+<pre class="ghc-core"><code>...
+case readMutVar# @ RealWorld @ Int ref rwState0 of
+    _ { (# rwState1, value #) -&gt;
+case value of
+    _ { I# unboxedIntValue -&gt;
+case writeMutVar# @ RealWorld @ Int ref (I# (unboxedIntValue +# 1)) rwState1 of ...</code></pre>
+<p>I find GHC Core almost unreadable. <br> One trick is to try to ignore most of the case statments.<br> The first and the third case statements are not for scrutinizing alternatives, but are to ensure proper sequencing of IO actions. <br></p>
+<pre class="ghc-core">
+<code class="ghc-core">
+<span class="state-token-case">case readMutVar# @ RealWorld @ Int ref rwState0 of
+    _ { (# rwState1, value #) -></span>
+case value of
+    _ { I# unboxedIntValue ->
+<span class="state-token-case">case writeMutVar# @ RealWorld @ Int ref (I# (unboxedIntValue +# 1)) rwState1 of ..</span>
+</code>
+</pre>
+
+<p>The second case statement is unboxed a primitive int.</p>
+<pre class="ghc-core">
+case value of _ { <span class="ghc-core-boxing">I# unboxedIntValue</span> }
+</pre>
+<p>and the boxing when setting</p>
+<pre class="ghc-core">
+case writeMutVar# @ RealWorld @ Int ref (<span class="ghc-core-boxing">I# (unboxedIntValue +# 1)</span>)
+</pre>
+
+<p><code>I#</code> is the <code>Int</code> constructor (the <code>#</code> means it is a compiler primitive). It wraps or boxes an unpacked, unboxed, &quot;real&quot; int. <br> Most of the time the compiler can perform the unboxing automatically, but it can't in this case. <a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a> <br> If it is just boxing then we need a unboxed mutable reference. I can think of two options <a href="https://hackage.haskell.org/package/base-4.7.0.1/docs/Foreign-Ptr.html">Ptr Int</a> and <a href="http://hackage.haskell.org/package/primitive-0.5.3.0/docs/Data-Primitive-ByteArray.html#t:MutableByteArray">MutableByteArray</a>. <br></p>
+<blockquote class="twitter-tweet tw-align-center" lang="en"><p>
+Dropping truth bombs.
+
+“<a href="https://twitter.com/jfischoff"><span class="citation">@jfischoff</span></a>: <a href="https://twitter.com/EvilHaskellTips"><span class="citation">@EvilHaskellTips</span></a> IORefs? No, no, no. Ptrs + Storable. C is the only fast language.”
+</p>
+— Evil Haskell Tips (<span class="citation">@EvilHaskellTips</span>) <a href="https://twitter.com/EvilHaskellTips/status/430561860794843136">February 4, 2014</a>
+</blockquote>
+<script async src="http://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+<p>First the <code class="sourceCode haskell"><span class="dt">Ptr</span></code> version</p>
+<pre class="sourceCode haskell"><code class="sourceCode haskell">ptrHertz <span class="fu">=</span> alloca <span class="fu">$</span> \ptr <span class="ot">-&gt;</span> <span class="kw">do</span>
+   poke ptr (<span class="dv">0</span><span class="ot"> ::</span> <span class="dt">Int</span>)
+   loopHundredMillion <span class="fu">$</span> <span class="kw">do</span>
+     i <span class="ot">&lt;-</span> peek ptr
+     <span class="kw">let</span> <span class="fu">!</span>i&#39; <span class="fu">=</span> i <span class="fu">+</span> <span class="dv">1</span>
+     poke ptr i&#39;</code></pre>
+<p>Using criterion I can see this gives me <strong>0.230 secs</strong>. <br> Closer. <br> Now the <code class="sourceCode haskell"><span class="dt">MutableByteBuffer</span></code> version:</p>
+<pre class="sourceCode haskell"><code class="sourceCode haskell">mbaHertz <span class="fu">=</span> <span class="kw">do</span>  
+  mba <span class="ot">&lt;-</span> newAlignedPinnedByteArray <span class="dv">4</span> <span class="dv">8</span>
+  loopHundredMillion <span class="fu">$</span> <span class="kw">do</span>
+      i <span class="ot">&lt;-</span> readByteArray mba <span class="dv">0</span><span class="ot"> ::</span> <span class="dt">IO</span> <span class="dt">Int</span>
+      <span class="kw">let</span> <span class="fu">!</span>i&#39; <span class="fu">=</span> i <span class="fu">+</span> <span class="dv">1</span>
+      writeByteArray mba <span class="dv">0</span> i&#39;</code></pre>
+<p><strong>0.189</strong> seconds. <br> About <strong><em>5 percent</em></strong> slower then C and assembly versions. Nice. <br> MutableByteBuffers are a length followed by the data immediately. The length is unnecessary in our case, so we are using more space then necessary. <br> Maybe the extra length is causing a slowdown? <br> Having a unboxed mutable value like MutableByteBuffer would be nice, too bad we don't have one ... or do we? <br> There is <a href="http://hackage.haskell.org/package/primitive-0.5.3.0/docs/Data-Primitive-MutVar.html">MutVar</a>, so how does it compare? <br> Let's compare <code class="sourceCode haskell"><span class="dt">MutVar</span></code></p>
+<pre class="sourceCode haskell"><code class="sourceCode haskell">mutVarHertz <span class="fu">=</span> <span class="kw">do</span>
+  mv <span class="ot">&lt;-</span> newMutVar <span class="dv">1</span>
+  loopHundredMillion <span class="fu">$</span> <span class="kw">do</span>
+      i <span class="ot">&lt;-</span> readMutVar<span class="ot"> mv ::</span> <span class="dt">IO</span> <span class="dt">Int</span>
+      <span class="kw">let</span> <span class="fu">!</span>i&#39; <span class="fu">=</span> i <span class="fu">+</span> <span class="dv">1</span>
+      writeMutVar mv i&#39;</code></pre>
+<p>Terrible.<br> There we have it, MutableByteBuffer FTW. <br> Except I don't really want to use a MutableByteBuffer. It is not type safe, I had to essential cast the data when reading it. It is less type safe then the C version. <br> If only there was a safe wrapper around MutableByteArray? There is! <a href="https://hackage.haskell.org/package/vector-0.10.11.0/docs/Data-Vector-Mutable.html">Vector</a>.</p>
+<p>So does how does <code class="sourceCode haskell"><span class="dt">Vector</span></code> fair</p>
+<p>TODO put in Vector code</p>
+<p>TODO profile MutableArray</p>
+<p>TODO add UArray code</p>
+<p><a href="https://github.com/jfischoff/mutable-reference-benchmarks">Sources</a></p>
+<h1 id="criterion-reports">Criterion Reports</h1>
+<h2 id="all-versions">All versions</h2>
+<h2 id="just-the-fast-versions">Just the fast versions</h2>
+<h2 id="the-single-operations---this-really-shows-off-the-accuracy-of-criterion.">The single operations - this really shows off the accuracy of Criterion.</h2>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Fastest on my computer for updating a single unboxed Int<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p><a href="http://ircbrowse.net/browse/haskell?id=18867462&amp;timestamp=1408726262#t1408726262">http://ircbrowse.net/browse/haskell?id=18867462&amp;timestamp=1408726262#t1408726262</a><a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p><a href="http://ircbrowse.net/browse/haskell?id=18867577&amp;timestamp=1408727702#t1408727702">http://ircbrowse.net/browse/haskell?id=18867577&amp;timestamp=1408727702#t1408727702</a><a href="#fnref3">↩</a></p></li>
+</ol>
+</div>
