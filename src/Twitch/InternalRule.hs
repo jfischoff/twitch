@@ -130,8 +130,6 @@ testAndFireRule Config {..} event rule = do
 setupRuleForDir :: Config -> WatchManager -> [InternalRule] -> FilePath -> IO ()
 setupRuleForDir config@(Config {..}) man rules dirPath = do
   -- TODO Instead of const True, this should use the rule's fileTests
-  print "yo"
-  print dirPath
   void $ watchDir man dirPath (const True) $ \event -> do 
     print event
     log $ IEvent event
@@ -140,9 +138,6 @@ setupRuleForDir config@(Config {..}) man rules dirPath = do
 -- | Setup all of the directory watches using the rules
 setupRules :: Config -> [InternalRule] -> IO WatchManager
 setupRules config@(Config {..}) rules = do 
-  print "hey"
   man <- startManagerConf watchConfig
-  print $ length rules
-  print dirsToWatch
   forM_ dirsToWatch $ setupRuleForDir config man rules
   return man

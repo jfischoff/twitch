@@ -161,7 +161,6 @@ optionsToConfig Options {..} = do
                        [currentDir']
                      else
                        dirsToWatch                 
-  print dirsToWatch'
                        
   (logger, mhandle) <- toLogger (fromMaybe "log.txt" logFile) log 
   let encodedDirs = map F.decodeString dirsToWatch'
