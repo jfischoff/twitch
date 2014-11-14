@@ -31,17 +31,6 @@ data LoggerType
   | NoLogger
   deriving (Eq, Show, Read, Ord)
 
-{- 
-data Logger = Logger 
-  { handle :: Handle
-  , queue  :: TBMQueue String
-  , thread :: ThreadId
-  }
-  
-put :: Logger -> String -> IO ()
-put Logger {..} str = do
--}  
-
 toLogger :: FilePath 
          -> LoggerType
          -> IO (IR.Issue -> IO (), Maybe Handle)
