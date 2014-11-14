@@ -1,2 +1,9 @@
-module Twitch (Dep) where
+module Twitch 
+  ( Dep
+  , DepM
+  , run
+  , defaultMain
+  ) where
 import Twitch.Internal
+import Twitch.Main
+import Twitch.Run

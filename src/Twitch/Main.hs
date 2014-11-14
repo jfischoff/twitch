@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Unnamed.Main where
+module Twitch.Main where
 import Data.Monoid
 import Options.Applicative
 import Data.Default
@@ -22,6 +22,7 @@ import Control.Concurrent.STM.TBMQueue
 import Control.Concurrent
 -- parse the command line
 -- 
+
 
 concatMapM f = fmap concat . mapM f
 
