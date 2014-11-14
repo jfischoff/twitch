@@ -137,12 +137,13 @@ pOptions
        <> help "Whether to use polling or not" 
        <> value (usePolling def)
         )
-  <*> option
+  <*> nullOption 
         ( long "current-dir"
        <> short 'c'
        <> metavar "CURRENT_DIR"
        <> help "Director to append to the glob patterns" 
        <> value (currentDir def)
+       <> eitherReader (return . Just)
         )
 
 -- This is like run, but the config params can be over written from the defaults
@@ -159,13 +160,15 @@ optionsToConfig Options {..} = do
       dirsToWatch' = if null dirsToWatch then
                        [currentDir']
                      else
-                       dirsToWatch
-
+                       dirsToWatch                 
+  print dirsToWatch'
+                       
   (logger, mhandle) <- toLogger (fromMaybe "log.txt" logFile) log 
+  let encodedDirs = map F.decodeString dirsToWatch'
   dirsToWatch'' <- if recurseThroughDirectories then 
-                   concatMapM findAllDirs $ map F.decodeString dirsToWatch'
+                   (encodedDirs ++) <$> concatMapM findAllDirs encodedDirs
                  else 
-                   return $ map F.decodeString dirsToWatch'
+                   return encodedDirs
   
   let watchConfig = FS.WatchConfig
         { FS.confDebounce     = toDB debounceAmount debounce
@@ -178,7 +181,6 @@ optionsToConfig Options {..} = do
         , dirsToWatch = dirsToWatch''
         , watchConfig = watchConfig
         }
-  
   return (currentDir', config, mhandle)
 
 defaultMain :: Dep -> IO ()

@@ -11,6 +11,7 @@ import System.FSNotify
 import System.Directory
 import Twitch.Path
 import Data.Default
+import Debug.Trace
 
 -- This the main interface for running a Dep
 

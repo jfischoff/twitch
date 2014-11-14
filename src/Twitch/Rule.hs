@@ -20,6 +20,7 @@ import Data.String
 import Data.Default
 import Control.Arrow
 import Data.Either
+import Debug.Trace
 import System.FSNotify (WatchManager)
 
 -- It doesn't appear that the current directory is need in the monad
@@ -95,12 +96,14 @@ addModify = flip (|>)
 
 data RuleIssue
   = PatternCompliationFailed PatternText String
+  deriving Show
 
 compilePattern :: FilePath -> PatternText -> Either RuleIssue (FilePath -> Bool)
 compilePattern currentDir pattern = left (PatternCompliationFailed pattern) $ do 
    -- TODO is this way of adding the current directory cross platfrom okay?
    -- Does the globbing even work on windows
-   let absolutePattern = encodeString currentDir <> "/" <> T.unpack pattern
+   
+   let absolutePattern = traceShowId $ encodeString currentDir <> "/" <> T.unpack pattern
    p <- tryCompileWith compDefault absolutePattern
    let test = match $ simplify p
    return $ \x -> test $ encodeString x
