@@ -3,7 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving      #-}
 {-# LANGUAGE OverloadedStrings               #-}
 {-# LANGUAGE FlexibleInstances               #-}
-module Twitch.Unnamed.Internal where
+module Twitch.Internal where
 import Data.Map (Map)
 import Control.Applicative
 import Control.Monad

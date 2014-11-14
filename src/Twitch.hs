@@ -1,2 +1,2 @@
 module Twitch (Dep) where
-import Twitch.Unnamed.Internal
+import Twitch.Internal

@@ -1,5 +1,5 @@
-module Twitch.Unnamed.Run where
-import Twitch.Unnamed.Internal
+module Twitch.Run where
+import Twitch.Internal
 import Twitch.InternalRule
 import Twitch.Rule (RuleIssue)
 import Data.Either
