@@ -27,6 +27,7 @@ import Control.Arrow
 import Data.Either
 import System.FSNotify (WatchManager)
 
+-- | A polymorphic 'Dep'. Exported for completeness, ignore. 
 newtype DepM a = DepM { unDepM :: State [Rule] a}
   deriving ( Functor
            , Applicative
@@ -34,20 +35,20 @@ newtype DepM a = DepM { unDepM :: State [Rule] a}
            , MonadState [Rule]
            )
 
+-- | This is the key type of the package, it is where rules are accumulated.
+type Dep = DepM ()
+
+instance IsString Dep where
+  fromString = addRule . fromString
+
 runDep :: Dep -> [Rule]
 runDep = runDepWithState mempty
 
 runDepWithState :: [Rule] -> Dep -> [Rule] 
 runDepWithState xs = flip execState xs . unDepM 
 
-type Dep = DepM ()
-
-instance IsString Dep where
-  fromString = addRule . fromString  
-  
 addRule r = State.modify (r :)
 
--- TODO this should probably issue a warning 
 modHeadRule :: Dep -> (Rule -> Rule) -> Dep
 modHeadRule dep f = do 
   let res = runDep dep
@@ -57,22 +58,27 @@ modHeadRule dep f = do
 
 infixl 8 |+, |%, |-, |>, |#
 (|+), (|%), (|-), (|>) :: Dep -> (FilePath -> IO a) -> Dep
--- | Set the 'add' field
-x |+ f = modHeadRule x $ Rule.add' f
--- | Set the modify field
-x |% f = modHeadRule x $ Rule.modify' f
--- | Set the delete field
-x |- f = modHeadRule x $ Rule.delete' f
--- | Set both the 'add' and 'modify' field to the same value
+-- | Add a \'add\' callback
+x |+ f = modHeadRule x $ Rule.addF f
+-- | Add a \'modify\' callback
+x |% f = modHeadRule x $ Rule.modifyF f
+-- | Add a \'delete' callback
+x |- f = modHeadRule x $ Rule.deleteF f
+-- | Add the same callback for the \'add\' and the \'modify\' events.
 x |> f = x |+ f |% f
 
--- | Set the name
+-- | Set the name of a rule. Useful for debugging when logging is enabled.
+--   Rules names default to the glob pattern.
 (|#) :: Dep -> Text -> Dep
-r |# p = modHeadRule r $ Rule.name' p
+r |# p = modHeadRule r $ Rule.nameF p
 
 -- Prefix API -----------------------------------------------------------------
-add', modify', delete', addModify :: (FilePath -> IO a) -> Dep -> Dep
-add'      = flip (|+)
-modify'   = flip (|%)
-delete'   = flip (|-)
+add, modify, delete, addModify :: (FilePath -> IO a) -> Dep -> Dep
+-- | Add a \'add\' callback
+add      = flip (|+)
+-- | Add a \'modify\' callback
+modify   = flip (|%)
+-- | Add a \'delete' callback
+delete   = flip (|-)
+-- | Add the same callback for the \'add\' and the \'modify\' events.
 addModify = flip (|>)

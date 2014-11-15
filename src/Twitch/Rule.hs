@@ -23,11 +23,6 @@ import Data.Either
 import Debug.Trace
 import System.FSNotify (WatchManager)
 
--- It doesn't appear that the current directory is need in the monad
--- The new way I am thinking about this
--- This is a Rule type and what is currently called Rule is called 
--- InternalRule
-
 type Name        = Text
 type PatternText = Text
 
@@ -84,12 +79,12 @@ x |> f = x |+ f |% f
 r |# p = r { name = p }
 
 -- Prefix API -----------------------------------------------------------------
-add', modify', delete', addModify :: (FilePath -> IO a) -> Rule -> Rule
-add'      = flip (|+)
-modify'   = flip (|%)
-delete'   = flip (|-)
-name'     = flip (|#)
-addModify = flip (|>)
+addF, modifyF, deleteF, addModifyF :: (FilePath -> IO a) -> Rule -> Rule
+addF      = flip (|+)
+modifyF   = flip (|%)
+deleteF   = flip (|-)
+nameF     = flip (|#)
+addModifyF = flip (|>)
 
 -- def & add foo & modify foo & delete foo & test tester
 -- def & add foo & modify foo & delete foo & pattern tester
