@@ -183,15 +183,7 @@ optionsToConfig Options {..} = do
   return (currentDir', config, mhandle)
 
 -- | Simplest way to create a file watcher app. Set your main equal to defaultMain 
---   and you are good to go. In this example
---   
---   > {-# LANGUAGE QuasiQuotes #-}
---   > import Twitch 
---   > import FileCommand
---   >
---   > main = defaultMain $ do
---   >   "blog.md"    |> [s|pandoc -o$directory$basename.html $path|]
---   >   "blog.html"  |> [s|osascript refreshSafari.AppleScript|]
+--   and you are good to go. See the module documentation for examples.
 -- 
 defaultMain :: Dep -> IO ()
 defaultMain dep = do

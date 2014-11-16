@@ -1,7 +1,7 @@
 -- | Twitch is monadic DSL and library for file watching. 
 --   It conveniently utilizes 'do' notation in the style of 
 --   <https://hackage.haskell.org/package/shake Shake> and 
---   <https://hackage.haskell.org/package/clay clay> to expose the functionality of
+--   <https://hackage.haskell.org/package/clay clay> to expose the functionality of the
 --   <http://hackage.haskell.org/package/fsnotify fsnotify> cross-platform file system 
 --   watcher.
 --   
@@ -23,7 +23,7 @@
 --   or infix API.
 --   
 --   There are three types of events, \'add\', \'modify\' and \'delete\'. In many cases, 
---   the add and modify responses are the same, so a \'add and modify\' portion of the API 
+--   the add and modify responses are the same, so an \'add and modify\' API 
 --   is provided
 --   
 --   In the example above an \'add and modify\' callback was added to both the \"*.md\" 
@@ -43,20 +43,41 @@
 --   <https://hackage.haskell.org/package/Glob-0.7.5/docs/System-FilePath-Glob.html#v:compile Glob>
 --   library's documentation.
 --   
+--   Since a command pattern is calling system commands with a file path, a useful addition
+--   to twitch is the <https://hackage.haskell.org/package/file-command-qq-0.1.0.4 file-command-qq> quasiquoter, 
+--   which is the package of the same name. 
+--
+--   Here is a slightly more complicated version the example from earlier, using the 
+--   FileCommand quasiquoter.
+--   
+--   > {-# LANGUAGE OverloadedStrings #-}
+--   > {-# LANGUAGE QuasiQuotes #-}
+--   > import Twitch 
+--   > import FileCommand
+--   >
+--   > main = defaultMain $ do
+--   >   "*.md"    |> [s|pandoc -t html -o$directory$basename-test.html $path|]
+--   >   "*.html"  |> [s|osascript refreshSafari.AppleScript|]
+--   
 module Twitch 
   ( Dep
-  , DepM
-  , run
   , defaultMain
+  -- * Infix API
   , (|+)
   , (|%)
   , (|-)
   , (|>)
   , (|#) 
+  -- * Prefix API
   , add
   , modify
   , delete
   , addModify
+  , name
+  -- Running as a library
+  , run
+  -- * Extra
+  , DepM
   ) where
 import Twitch.Internal 
 import Twitch.Main

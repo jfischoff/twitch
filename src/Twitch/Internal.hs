@@ -56,6 +56,7 @@ modHeadRule dep f = do
     x:xs -> put $ f x : xs
     r    -> put r
 
+-- Infix API -----------------------------------------------------------------
 infixl 8 |+, |%, |-, |>, |#
 (|+), (|%), (|-), (|>) :: Dep -> (FilePath -> IO a) -> Dep
 -- | Add a \'add\' callback
@@ -82,3 +83,7 @@ modify   = flip (|%)
 delete   = flip (|-)
 -- | Add the same callback for the \'add\' and the \'modify\' events.
 addModify = flip (|>)
+-- | Set the name of a rule. Useful for debugging when logging is enabled.
+--   Rules names default to the glob pattern.
+name :: Text -> Dep -> Dep
+name = flip (|#)

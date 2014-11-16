@@ -2,9 +2,27 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                twitch
-version:             0.1.1.0
+version:             0.1.2.0
 synopsis:            A high level file watcher DSL
--- description:         
+description: 
+ Twitch is monadic DSL and library for file watching. 
+ It conveniently utilizes 'do' notation in the style of 
+ Shake and clay to expose the functionality of the
+ fsnotify cross-platform file system watcher.
+ .
+ Here is an example that converts Markdown files to Html and reloads Safari
+ whenever the input files change.
+ .
+ @
+  {-# LANGUAGE OverloadedStrings #-}
+  import Twitch 
+  import Filesystem.Path.CurrentOS
+ .  
+  main = defaultMain $ do
+      "*.md"   |> \\filePath -> system $ "pandoc -t html " ++ encodeString filePath 
+      "*.html" |> \\_ -> system $ "osascript refreshSafari.AppleScript"
+ @
+ .
 homepage:            https://github.com/jfischoff/twitch
 license:             MIT
 license-file:        LICENSE
