@@ -74,9 +74,11 @@ module Twitch
   , addModify
   , name
   -- * Advanced Main
+  , LoggerType (..)
   , Options (..)
   , defaultMainWithOptions
   -- * Running as a library
+  , Issue (..)
   , Config (..)
   , run
   , runWithConfig
@@ -84,7 +86,7 @@ module Twitch
   , DepM
   ) where
 import Twitch.Internal 
-import Twitch.InternalRule (Config (..))
+import Twitch.InternalRule (Config (..), Issue (..))
 import Twitch.Main
 import Twitch.Run
 import Twitch.Rule (Rule, RuleAction, Name, PatternText)

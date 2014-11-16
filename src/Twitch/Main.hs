@@ -44,6 +44,9 @@ toLogger filePath = \case
 
 data Options = Options 
   { log          :: LoggerType
+  -- ^ The logger type. 
+  --   This cooresponds to the --log or -l argument. The valid options
+  --   are "LogToStdout", "LogToFile", and "NoLogger"
   , logFile      :: Maybe FilePath
   -- ^ A logger for the issues 
   , dirsToWatch  :: [FilePath]
@@ -189,8 +192,8 @@ defaultMain :: Dep -> IO ()
 defaultMain dep = do
   let opts = info (helper <*> pOptions)
         ( fullDesc
-       <> progDesc "Print a greeting for TARGET"
-       <> header "hello - a test for optparse-applicative" 
+       <> progDesc "twitch"
+       <> header "a file watcher" 
         )
   options <- execParser opts
   defaultMainWithOptions options dep
