@@ -23,7 +23,6 @@ import Control.Concurrent
 -- parse the command line
 -- 
 
-
 concatMapM f = fmap concat . mapM f
 
 data LoggerType 
@@ -47,19 +46,38 @@ data Options = Options
   -- ^ The logger type. 
   --   This cooresponds to the --log or -l argument. The valid options
   --   are "LogToStdout", "LogToFile", and "NoLogger"
+  --   If "LogToFile" a file can provide with the 'logFile' field.
   , logFile      :: Maybe FilePath
-  -- ^ A logger for the issues 
+  -- ^ The file to log to
+  --   This is only used if the 'log' field is set to "LogToFile".
+  --   This cooresponds to the --log-file or -f argument
   , dirsToWatch  :: [FilePath]
-  -- ^ The directories to watch
+  -- ^ The directories to watch. 
+  --   This cooresponds to the --directories and -d argument
   , recurseThroughDirectories :: Bool
+  -- ^ If true, main will recurse throug all subdirectories of the 'dirsToWatch' 
+  --   field. Otherwise the 'dirsToWatch' will be used literally.
+  --   By default this is empty and the currentDirectory is used.
   , debounce     :: DebounceType
+  -- ^ This corresponds to the debounce type used in the fsnotify library
+  --   The argument for default main is --debounce or -b .
+  --   Valid options are "DebounceDefault", "Debounce", "NoDebounce"
+  --   If "Debounce" is used then a debounce amount must be specified with the 
+  --   'debounceAmount'
   , debounceAmount :: Double
-  -- ^ Debounce configuration
+  -- ^ The amount to debounce. This is only meaningful when 'debounce' is set
+  --   to 'Debounce'. 
+  --   It cooresponds to the --debounce-amount or -a argument
   , pollInterval :: Int
-  -- ^ poll interval
+  -- ^ poll interval if polling is used.
+  --   This cooresponds to the --poll-interval or -i argument
   , usePolling   :: Bool
-  -- ^ config for the file watch
+  -- ^ If true polling is used instead of events.
+  --   This cooresponds to the --poll or -p argument
   , currentDir   :: Maybe FilePath
+  -- ^ The current directory to append to the glob patterns. If Nothing then
+  --   the value is whatever is returned by 'getCurrentDirectory'
+  --   This cooresponds to the --current-dir or -c arguments
   }
 
 data DebounceType 
@@ -188,6 +206,9 @@ optionsToConfig Options {..} = do
 -- | Simplest way to create a file watcher app. Set your main equal to defaultMain 
 --   and you are good to go. See the module documentation for examples.
 -- 
+--   The command line is parsed to make 'Options' value. For more information on
+--   the arguments that can be passed see the doc for 'Options' and the run the 
+--   executable made with defaultMain with the --help argument. 
 defaultMain :: Dep -> IO ()
 defaultMain dep = do
   let opts = info (helper <*> pOptions)
