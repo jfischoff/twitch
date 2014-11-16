@@ -12,9 +12,10 @@ description:
  .
  Here is an example that converts Markdown files to Html and reloads Safari
  whenever the input files change.
+ 
  .
  @
-  {-# LANGUAGE OverloadedStrings #-}
+  -- Use OverloadedStrings. Can't get that to show up here :(
   import Twitch 
   import Filesystem.Path.CurrentOS
  .  
