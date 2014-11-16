@@ -66,6 +66,9 @@ instance IsString Rule where
 infixl 8 |+, |%, |-, |>, |#
 (|+), (|%), (|-), (|>) :: Rule -> (FilePath -> IO a) -> Rule
 -- | Set the 'add' field
+--   ex.
+-- 
+--   > "doodle.md |+ ringBell "
 x |+ f = x { add = void . f }
 -- | Set the modify field
 x |% f = x { modify = void . f }

@@ -66,9 +66,9 @@ toInternalRule currentDir rule = do
 
 -- | Configuration to run the file watcher
 data Config = Config 
-  { log         :: Issue -> IO ()
+  { logger      :: Issue -> IO ()
   -- ^ A logger for the issues 
-  , dirsToWatch :: [FilePath]
+  , dirs        :: [FilePath]
   -- ^ The directories to watch
   , watchConfig :: WatchConfig
   -- ^ config for the file watcher
@@ -77,13 +77,13 @@ data Config = Config
 instance Show Config where
   show Config {..} 
     =  "Config { dirsToWatch = " 
-    ++ show dirsToWatch
+    ++ show dirs
     ++ "}"
 
 instance Default Config where
   def = Config
-    { log         = def
-    , dirsToWatch = def
+    { logger      = def
+    , dirs        = def
     , watchConfig = defaultConfig
     }
     
@@ -121,7 +121,7 @@ testAndFireRule :: Config -> Event -> InternalRule -> IO ()
 testAndFireRule Config {..} event rule = do
   let shouldFire = fileTest rule (filePath event) (time event)
   when shouldFire $ do 
-    log $ IRuleFired event rule
+    logger $ IRuleFired event rule
     fireRule event rule 
 
 -- TODO in the future this should use the recursive directory functions
@@ -131,13 +131,12 @@ setupRuleForDir :: Config -> WatchManager -> [InternalRule] -> FilePath -> IO ()
 setupRuleForDir config@(Config {..}) man rules dirPath = do
   -- TODO Instead of const True, this should use the rule's fileTests
   void $ watchDir man dirPath (const True) $ \event -> do 
-    print event
-    log $ IEvent event
+    logger $ IEvent event
     forM_ rules $ testAndFireRule config event
 
 -- | Setup all of the directory watches using the rules
 setupRules :: Config -> [InternalRule] -> IO WatchManager
 setupRules config@(Config {..}) rules = do 
   man <- startManagerConf watchConfig
-  forM_ dirsToWatch $ setupRuleForDir config man rules
+  forM_ dirs $ setupRuleForDir config man rules
   return man

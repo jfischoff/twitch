@@ -19,7 +19,7 @@ run :: Dep -> IO WatchManager
 run dep =  do
   currentDir <- decodeString <$> getCurrentDirectory
   dirs       <- findAllDirs currentDir
-  runWithConfig currentDir (def { log = print, dirsToWatch = dirs }) dep
+  runWithConfig currentDir (def { logger = print, dirs = dirs }) dep
 
 runWithConfig :: FilePath -> Config -> Dep -> IO WatchManager
 runWithConfig currentDir config dep = do

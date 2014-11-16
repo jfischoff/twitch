@@ -176,8 +176,8 @@ optionsToConfig Options {..} = do
         }
   
   let config = IR.Config
-        { log         = logger
-        , dirsToWatch = dirsToWatch''
+        { logger      = logger
+        , dirs        = dirsToWatch''
         , watchConfig = watchConfig
         }
   return (currentDir', config, mhandle)
@@ -192,11 +192,19 @@ defaultMain dep = do
        <> progDesc "Print a greeting for TARGET"
        <> header "hello - a test for optparse-applicative" 
         )
-  (currentDir, config, mhandle) <- optionsToConfig =<< execParser opts
+  options <- execParser opts
+  defaultMainWithOptions options dep
+
+-- | A main file that uses manually supplied options instead of parsing the passed in arguments.
+defaultMainWithOptions :: Options -> Dep -> IO ()
+defaultMainWithOptions options dep = do
+  (currentDir, config, mhandle) <- optionsToConfig options
   let currentDir' = F.decodeString currentDir
   manager <- runWithConfig currentDir' config dep 
   putStrLn "Type anything to quit"
   _ <- getLine
   for_ mhandle hClose
   FS.stopManager manager
+  
+
   

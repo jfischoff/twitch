@@ -73,12 +73,18 @@ module Twitch
   , delete
   , addModify
   , name
-  -- Running as a library
+  -- * Advanced Main
+  , Options (..)
+  , defaultMainWithOptions
+  -- * Running as a library
+  , Config (..)
   , run
+  , runWithConfig
   -- * Extra
   , DepM
   ) where
 import Twitch.Internal 
+import Twitch.InternalRule (Config (..))
 import Twitch.Main
 import Twitch.Run
 import Twitch.Rule (Rule, RuleAction, Name, PatternText)
