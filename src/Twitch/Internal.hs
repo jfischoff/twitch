@@ -1,5 +1,4 @@
 {-# LANGUAGE RecordWildCards                 #-}
-{-# LANGUAGE LambdaCase                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving      #-}
 {-# LANGUAGE OverloadedStrings               #-}
 {-# LANGUAGE FlexibleInstances               #-}
@@ -11,8 +10,6 @@ import Filesystem.Path
 import Filesystem.Path.CurrentOS
 import Prelude hiding (FilePath)
 import Data.List 
-import Data.Text (Text)
-import qualified Data.Text as T
 import Control.Monad.Reader
 import Control.Monad.State as State
 import System.Directory
@@ -88,7 +85,7 @@ x |> f = x |+ f |% f
 --   ex.
 --
 --   > "*.md" |> [s|pandoc -t html $path|] |# "markdown to html"
-(|#) :: Dep -> Text -> Dep
+(|#) :: Dep -> String -> Dep
 r |# p = modHeadRule r $ Rule.nameF p
 
 -- Prefix API -----------------------------------------------------------------
@@ -118,5 +115,5 @@ addModify = flip (|>)
 --   ex.
 --
 --   > name "markdown to html" $ addModify [s|pandoc -t html $path|] "*.md"
-name :: Text -> Dep -> Dep
+name :: String -> Dep -> Dep
 name = flip (|#)

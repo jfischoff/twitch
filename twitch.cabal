@@ -43,7 +43,6 @@ library
                , Twitch.Rule
                , Twitch.Run
   other-extensions: RecordWildCards
-                  , LambdaCase
                   , GeneralizedNewtypeDeriving
                   , OverloadedStrings
                   , FlexibleInstances
@@ -53,10 +52,9 @@ library
                   , MultiParamTypeClasses
                   , TypeSynonymInstances
                   , TemplateHaskell
-  build-depends: base >=4.7 && <4.8
+  build-depends: base >=4.5 && <4.8
                , containers >=0.5 && <0.6
                , system-filepath >=0.4 && <0.5
-               , text >=1.2 && <1.3
                , mtl >=2.1 && <2.2
                , directory >=1.2 && <1.3
                , Glob >=0.7 && <0.8

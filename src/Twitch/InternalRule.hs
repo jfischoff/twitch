@@ -1,5 +1,4 @@
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Twitch.InternalRule where
 import Filesystem.Path
@@ -14,8 +13,6 @@ import System.FSNotify ( Event (..)
 import Data.Default
 import Control.Monad
 import Data.Monoid
-import qualified Data.Text as T
-import Data.Text (Text)
 import Prelude hiding (FilePath)
 import Twitch.Rule (Rule, RuleIssue)
 import qualified Twitch.Rule as Rule
@@ -26,7 +23,7 @@ type Action   = FilePath -> UTCTime -> IO ()
 type FileTest = FilePath -> UTCTime -> Bool
 
 data InternalRule = InternalRule 
-  { name     :: Text
+  { name     :: String
   -- ^ A name for debugging mostly
   , fileTest :: FileTest
   -- ^ The test to determine if the rule actions should fire
@@ -49,7 +46,7 @@ instance Default InternalRule where
 
 instance Show InternalRule where
   show InternalRule {..} 
-    =  T.unpack $ "Rule { name = " 
+    =  "Rule { name = " 
     <> name 
     <> " }"
 
@@ -97,14 +94,14 @@ data Issue
 
 -- | Retrieve the filePath of an Event
 filePath :: Event -> FilePath
-filePath = \case
+filePath e = case e of
   Added    x _ -> x
   Modified x _ -> x
   Removed  x _ -> x
 
 -- | Retrieve the time of an Event
 time :: Event -> UTCTime
-time = \case
+time e = case e of
   Added    _ x -> x
   Modified _ x -> x
   Removed  _ x -> x

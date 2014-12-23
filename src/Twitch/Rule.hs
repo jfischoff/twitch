@@ -1,5 +1,4 @@
 {-# LANGUAGE RecordWildCards                 #-}
-{-# LANGUAGE LambdaCase                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving      #-}
 {-# LANGUAGE OverloadedStrings               #-}
 {-# LANGUAGE FlexibleInstances               #-}
@@ -10,8 +9,6 @@ import Control.Monad
 import Filesystem.Path
 import Filesystem.Path.CurrentOS
 import Prelude hiding (FilePath)
-import Data.Text (Text)
-import qualified Data.Text as T
 import System.Directory
 import System.FilePath.Glob
 import Data.Monoid
@@ -23,8 +20,8 @@ import Data.Either
 import Debug.Trace
 import System.FSNotify (WatchManager)
 
-type Name        = Text
-type PatternText = Text
+type Name        = String
+type PatternText = String
 
 -- | TODO maybe change this to have the timestamp
 type RuleAction = FilePath -> IO ()
@@ -43,7 +40,7 @@ type RuleAction = FilePath -> IO ()
 --    }
 
 data Rule = Rule 
-  { name          :: Text
+  { name          :: String
   , pattern       :: PatternText
   , add           :: RuleAction
   , modify        :: RuleAction
@@ -60,7 +57,7 @@ instance Default Rule where
           }
 
 instance IsString Rule where
-  fromString x = let packed = T.pack x in def { pattern = packed, name = packed} 
+  fromString x = def { pattern = x, name = x} 
 
 --- Infix API------------------------------------------------------------------
 infixl 8 |+, |%, |-, |>, |#
@@ -78,7 +75,7 @@ x |- f = x { delete = void . f }
 x |> f = x |+ f |% f
 
 -- | Set the name
-(|#) :: Rule -> Text -> Rule
+(|#) :: Rule -> String -> Rule
 r |# p = r { name = p }
 
 -- Prefix API -----------------------------------------------------------------
@@ -96,12 +93,14 @@ data RuleIssue
   = PatternCompliationFailed PatternText String
   deriving Show
 
-compilePattern :: FilePath -> PatternText -> Either RuleIssue (FilePath -> Bool)
+compilePattern :: FilePath 
+               -> PatternText 
+               -> Either RuleIssue (FilePath -> Bool)
 compilePattern currentDir pattern = left (PatternCompliationFailed pattern) $ do 
    -- TODO is this way of adding the current directory cross platfrom okay?
    -- Does the globbing even work on windows
    
-   let absolutePattern = traceShowId $ encodeString currentDir <> "/" <> T.unpack pattern
+   let absolutePattern = encodeString currentDir <> "/" <> pattern
    p <- tryCompileWith compDefault absolutePattern
    let test = match $ simplify p
    return $ \x -> test $ encodeString x

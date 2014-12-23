@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Twitch.Main where
@@ -34,7 +33,7 @@ data LoggerType
 toLogger :: FilePath
          -> LoggerType
          -> IO (IR.Issue -> IO (), Maybe Handle)
-toLogger filePath = \case
+toLogger filePath lt = case lt of
   LogToStdout -> return (print, Nothing)
   LogToFile -> do
     handle <- openFile filePath AppendMode
@@ -168,7 +167,7 @@ pOptions
 
 -- This is like run, but the config params can be over written from the defaults
 
-toDB amount = \case
+toDB amount dbtype = case dbtype of
   DebounceDefault -> FS.DebounceDefault
   Debounce        -> FS.Debounce $ fromRational $ toRational amount
   NoDebounce      -> FS.NoDebounce
