@@ -17,7 +17,6 @@ import Prelude hiding (log)
 import qualified Filesystem.Path as F
 import qualified Filesystem.Path.CurrentOS as F
 import Data.Time.Clock
-import Control.Concurrent.STM.TBMQueue
 import Control.Concurrent
 -- parse the command line
 --
