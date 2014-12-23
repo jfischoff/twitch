@@ -1,3 +1,5 @@
+![travis build status](https://travis-ci.org/jfischoff/twitch.svg?branch=master)
+
 Twitch is monadic DSL and library for file watching.
 It conveniently utilizes 'do' notation in the style of
 [Shake](https://hackage.haskell.org/package/shake) and
