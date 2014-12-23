@@ -33,10 +33,11 @@ copyright: (c) Jonathan Fischoff 2014
 category:            System
 build-type:          Simple
 extra-source-files:  README.md
+cabal-version:       >=1.10
 source-repository head
   type:     git
   location: https://github.com/jfischoff/twitch.git
-cabal-version:       >=1.10
+
 
 
 library
