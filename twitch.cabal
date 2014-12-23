@@ -29,11 +29,15 @@ license:             MIT
 license-file:        LICENSE
 author:              Jonathan Fischoff
 maintainer:          jonathangfischoff@gmail.com
--- copyright:
+copyright: (c) Jonathan Fischoff 2014
 category:            System
 build-type:          Simple
 extra-source-files:  README.md
+source-repository head
+  type:     git
+  location: https://github.com/jfischoff/twitch.git
 cabal-version:       >=1.10
+
 
 library
   exposed-modules: Twitch, Twitch.InternalRule
