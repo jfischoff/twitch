@@ -30,3 +30,5 @@ deploy:
     secure: pXctYT6ULqHF1GDJkuFHyxpXryYT174QbhsMXuOIBf4YFcSh4hLQIfCaL687DFQM2Az27smfCWs4wP3UT7NcAKl28lTNji8jk8ucsVzN4ImvXmJ+sq5vOO7lQqm5FaFWmLEaa57pjzerMvTL2DJTMT7agNRcNpgQs34clOJwxKo=
   on:
     repo: jfischoff/twitch
+    tags: true
+    all_branches: true
