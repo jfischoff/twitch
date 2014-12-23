@@ -1,5 +1,5 @@
 https://img.shields.io/hackage/v/twitch.svg
-twitch ![Hackage](https://img.shields.io/hackage/v/twitch.svg?style=flat)(https://hackage.haskell.org/package/twitch)
+twitch [![Hackage](https://img.shields.io/hackage/v/twitch.svg?style=flat)](https://hackage.haskell.org/package/twitch)
 ![travis build status](https://travis-ci.org/jfischoff/twitch.svg?branch=master)
 
 Twitch is monadic DSL and library for file watching.
