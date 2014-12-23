@@ -47,6 +47,7 @@ runDep = runDepWithState mempty
 runDepWithState :: [Rule] -> Dep -> [Rule] 
 runDepWithState xs = flip execState xs . unDepM 
 
+addRule :: Rule -> Dep
 addRule r = State.modify (r :)
 
 modHeadRule :: Dep -> (Rule -> Rule) -> Dep
