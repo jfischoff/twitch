@@ -53,7 +53,7 @@ instance Show InternalRule where
 toInternalRule :: FilePath -> Rule -> Either RuleIssue InternalRule
 toInternalRule currentDir rule = do
   test <- Rule.compilePattern currentDir $ Rule.pattern rule
-  return $ InternalRule 
+  return InternalRule 
     { name     = Rule.name rule
     , fileTest = \x _ -> test x
     , add      = \x _ -> Rule.add    rule x
@@ -125,7 +125,7 @@ testAndFireRule Config {..} event rule = do
 --      when appropiate
 -- | Start watching a directory, and run the rules on it.
 setupRuleForDir :: Config -> WatchManager -> [InternalRule] -> FilePath -> IO ()
-setupRuleForDir config@(Config {..}) man rules dirPath = do
+setupRuleForDir config@(Config {..}) man rules dirPath =
   -- TODO Instead of const True, this should use the rule's fileTests
   void $ watchDir man dirPath (const True) $ \event -> do 
     logger $ IEvent event

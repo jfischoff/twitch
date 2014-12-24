@@ -1,4 +1,3 @@
-{-# LANGUAGE RecordWildCards                 #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving      #-}
 {-# LANGUAGE OverloadedStrings               #-}
 {-# LANGUAGE FlexibleInstances               #-}
