@@ -1,5 +1,5 @@
 [![Hackage](https://img.shields.io/hackage/v/twitch.svg?style=flat)](https://hackage.haskell.org/package/twitch)
-![travis build status](https://travis-ci.org/jfischoff/twitch.svg?branch=master)
+[![travis build status](https://travis-ci.org/jfischoff/twitch.svg?branch=master)](https://travis-ci.org/jfischoff/twitch/builds)
 
 Twitch is monadic DSL and library for file watching.
 It conveniently utilizes 'do' notation in the style of
