@@ -58,7 +58,6 @@ library
                   , TypeSynonymInstances
                   , TemplateHaskell
   build-depends: base >=4.5 && <4.8
-               , containers
                , system-filepath
                , transformers 
                , directory 
