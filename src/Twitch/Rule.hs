@@ -3,22 +3,15 @@
 {-# LANGUAGE OverloadedStrings               #-}
 {-# LANGUAGE FlexibleInstances               #-}
 module Twitch.Rule where
-import Data.Map (Map)
-import Control.Applicative
 import Control.Monad
 import Filesystem.Path
 import Filesystem.Path.CurrentOS
 import Prelude hiding (FilePath)
-import System.Directory
 import System.FilePath.Glob
 import Data.Monoid
-import Data.Time.Clock
 import Data.String
 import Data.Default
 import Control.Arrow
-import Data.Either
-import Debug.Trace
-import System.FSNotify (WatchManager)
 
 type Name        = String
 type PatternText = String
@@ -80,11 +73,13 @@ r |# p = r { name = p }
 
 -- Prefix API -----------------------------------------------------------------
 addF, modifyF, deleteF, addModifyF :: (FilePath -> IO a) -> Rule -> Rule
-addF      = flip (|+)
-modifyF   = flip (|%)
-deleteF   = flip (|-)
-nameF     = flip (|#)
+addF       = flip (|+)
+modifyF    = flip (|%)
+deleteF    = flip (|-)
 addModifyF = flip (|>)
+
+nameF :: String -> Rule -> Rule
+nameF = flip (|#)
 
 -- def & add foo & modify foo & delete foo & test tester
 -- def & add foo & modify foo & delete foo & pattern tester

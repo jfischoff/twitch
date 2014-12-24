@@ -14,14 +14,13 @@ import Twitch.Internal
 import System.Directory
 import Data.Maybe
 import Prelude hiding (log)
-import qualified Filesystem.Path as F
 import qualified Filesystem.Path.CurrentOS as F
-import Data.Time.Clock
-import Control.Concurrent
+import Control.Monad (liftM)
 -- parse the command line
 --
 
-concatMapM f = fmap concat . mapM f
+concatMapM :: Monad m => (a -> m [b]) -> [a] -> m [b] 
+concatMapM f = liftM concat . mapM f
 
 data LoggerType
   = LogToStdout
@@ -166,6 +165,7 @@ pOptions
 
 -- This is like run, but the config params can be over written from the defaults
 
+toDB :: Real a => a -> DebounceType -> FS.Debounce
 toDB amount dbtype = case dbtype of
   DebounceDefault -> FS.DebounceDefault
   Debounce        -> FS.Debounce $ fromRational $ toRational amount

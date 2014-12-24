@@ -81,6 +81,8 @@ module Twitch
   -- * Running as a library
   , Issue (..)
   , InternalRule
+  , Rule
+  , RuleIssue
   , Config (..)
   , run
   , runWithConfig
@@ -91,4 +93,4 @@ import Twitch.Internal
 import Twitch.InternalRule (Config (..), Issue (..), InternalRule)
 import Twitch.Main
 import Twitch.Run
-import Twitch.Rule (Rule, RuleAction, Name, PatternText)
+import Twitch.Rule (Rule, RuleIssue)

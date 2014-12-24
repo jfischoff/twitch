@@ -109,9 +109,9 @@ time e = case e of
 -- | Run the Rule action associated with the an event 
 fireRule :: Event -> InternalRule -> IO ()
 fireRule event rule = case event of
-  Added    file time -> modify rule file time
-  Modified file time -> add    rule file time
-  Removed  file time -> delete rule file time
+  Added    file tyme -> modify rule file tyme
+  Modified file tyme -> add    rule file tyme
+  Removed  file tyme -> delete rule file tyme
 
 -- | Test to see if the rule should fire and fire it
 testAndFireRule :: Config -> Event -> InternalRule -> IO ()

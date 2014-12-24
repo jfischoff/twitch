@@ -11,19 +11,18 @@ import System.FSNotify
 import System.Directory
 import Twitch.Path
 import Data.Default
-import Debug.Trace
 
 -- This the main interface for running a Dep
 
 run :: Dep -> IO WatchManager
 run dep =  do
   currentDir <- decodeString <$> getCurrentDirectory
-  dirs       <- findAllDirs currentDir
-  runWithConfig currentDir (def { logger = print, dirs = dirs }) dep
+  dirs'       <- findAllDirs currentDir
+  runWithConfig currentDir (def { logger = print, dirs = dirs' }) dep
 
 runWithConfig :: FilePath -> Config -> Dep -> IO WatchManager
 runWithConfig currentDir config dep = do
-  let (issues, rules) = depToRules currentDir dep
+  let (_issues, rules) = depToRules currentDir dep
   -- TODO handle the issues somehow
   -- Log and perhaps error
   setupRules config rules
