@@ -89,8 +89,26 @@ module Twitch
   -- * Extra
   , DepM
   ) where
-import Twitch.Internal 
-import Twitch.InternalRule (Config (..), Issue (..), InternalRule)
+import Twitch.Internal
+    ( Dep,
+      DepM,
+      (|+),
+      (|%),
+      (|-),
+      (|>),
+      (|#),
+      add,
+      modify,
+      delete,
+      addModify,
+      name )
+import Twitch.InternalRule ( Config(..), Issue(..), InternalRule )
 import Twitch.Main
-import Twitch.Run
-import Twitch.Rule (Rule, RuleIssue)
+    ( DebounceType(..),
+      Options(Options, currentDir, debounce, debounceAmount, dirsToWatch,
+              logFile, pollInterval, recurseThroughDirectories, usePolling),
+      LoggerType(..),
+      defaultMain,
+      defaultMainWithOptions )
+import Twitch.Run ( run, runWithConfig )
+import Twitch.Rule ( Rule, RuleIssue )

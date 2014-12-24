@@ -1,21 +1,42 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Twitch.Main where
-import Data.Monoid
+import Prelude hiding (log)
+import Data.Monoid ( (<>) )
 import Options.Applicative
-import Data.Default
+    ( Applicative((<*>)),
+      (<$>),
+      Parser,
+      helper,
+      execParser,
+      value,
+      short,
+      progDesc,
+      option,
+      metavar,
+      long,
+      info,
+      help,
+      header,
+      fullDesc,
+      auto )
+import Data.Default ( Default(..) )
 import qualified System.FSNotify as FS
-import Twitch.Path
+import Twitch.Path ( findAllDirs )
 import qualified Twitch.InternalRule as IR
 import System.IO
-import Data.Foldable (for_)
-import Twitch.Run
-import Twitch.Internal
-import System.Directory
-import Data.Maybe
-import Prelude hiding (log)
+    ( IOMode(AppendMode),
+      Handle,
+      hPrint,
+      openFile,
+      hClose )
+import Data.Foldable ( for_ )
+import Twitch.Run ( runWithConfig )
+import Twitch.Internal ( Dep )
+import System.Directory ( getCurrentDirectory )
+import Data.Maybe ( fromMaybe )
 import qualified Filesystem.Path.CurrentOS as F
-import Control.Monad (liftM)
+import Control.Monad ( liftM )
 -- parse the command line
 --
 

@@ -3,15 +3,16 @@
 {-# LANGUAGE OverloadedStrings               #-}
 {-# LANGUAGE FlexibleInstances               #-}
 module Twitch.Internal where
-import Control.Applicative
-import Control.Monad
-import Filesystem.Path
-import Prelude hiding (FilePath)
+import Control.Applicative ( Applicative )
+import Filesystem.Path ( FilePath )
 import Control.Monad.Trans.State as State
+    ( StateT(StateT), State, put, modify, execState )
 import qualified Twitch.Rule as Rule
-import Twitch.Rule (Rule)
-import Data.Monoid
-import Data.String
+    ( addF, modifyF, deleteF, nameF )
+import Twitch.Rule ( Rule )
+import Data.Monoid ( Monoid(mempty) )
+import Data.String ( IsString(..) )
+import Prelude hiding (FilePath)
 
 -- | A polymorphic 'Dep'. Exported for completeness, ignore. 
 newtype DepM a = DepM { unDepM :: State [Rule] a}

@@ -1,20 +1,20 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Twitch.InternalRule where
-import Filesystem.Path
-import Data.Time.Clock
-import System.FSNotify ( Event (..)
-                       , WatchConfig
-                       , watchDir
-                       , startManagerConf
-                       , WatchManager
-                       , defaultConfig
-                       )
-import Data.Default
-import Control.Monad
-import Data.Monoid
+import Filesystem.Path ( FilePath )
+import Data.Time.Clock ( UTCTime )
+import System.FSNotify
+    ( Event(..),
+      WatchConfig,
+      watchDir,
+      startManagerConf,
+      WatchManager,
+      defaultConfig )
+import Data.Default ( Default(..) )
+import Control.Monad ( when, void, forM_ )
+import Data.Monoid ( Monoid(mempty), (<>) )
+import Twitch.Rule ( Rule, RuleIssue )
 import Prelude hiding (FilePath)
-import Twitch.Rule (Rule, RuleIssue)
 import qualified Twitch.Rule as Rule
 
 -- | The actions that are run when file events are triggered

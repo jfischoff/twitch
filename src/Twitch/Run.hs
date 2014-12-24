@@ -1,16 +1,17 @@
 module Twitch.Run where
-import Twitch.Internal
-import Twitch.InternalRule
-import Twitch.Rule (RuleIssue)
-import Data.Either
 import Prelude hiding (FilePath, log)
-import Filesystem.Path
-import Filesystem.Path.CurrentOS
-import Control.Applicative
-import System.FSNotify
-import System.Directory
-import Twitch.Path
-import Data.Default
+import Twitch.Internal ( Dep, runDep )
+import Twitch.InternalRule
+    ( Config(dirs, logger), InternalRule, toInternalRule, setupRules )
+import Twitch.Rule ( RuleIssue )
+import Data.Either ( partitionEithers )
+import Filesystem.Path ( FilePath )
+import Filesystem.Path.CurrentOS ( decodeString )
+import Control.Applicative ( (<$>) )
+import System.FSNotify ( WatchManager )
+import System.Directory ( getCurrentDirectory )
+import Twitch.Path ( findAllDirs )
+import Data.Default ( Default(def) )
 
 -- This the main interface for running a Dep
 

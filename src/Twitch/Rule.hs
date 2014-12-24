@@ -3,15 +3,16 @@
 {-# LANGUAGE OverloadedStrings               #-}
 {-# LANGUAGE FlexibleInstances               #-}
 module Twitch.Rule where
-import Control.Monad
-import Filesystem.Path
-import Filesystem.Path.CurrentOS
 import Prelude hiding (FilePath)
-import System.FilePath.Glob
-import Data.Monoid
-import Data.String
-import Data.Default
-import Control.Arrow
+import Control.Monad ( void )
+import Filesystem.Path ( FilePath )
+import Filesystem.Path.CurrentOS ( encodeString )
+import System.FilePath.Glob ( simplify, match, tryCompileWith, compDefault )
+import Data.Monoid ( (<>) )
+import Data.String ( IsString(..) )
+import Data.Default ( Default(..) )
+import Control.Arrow ( ArrowChoice(left) )
+
 
 type Name        = String
 type PatternText = String

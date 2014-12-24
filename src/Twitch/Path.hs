@@ -12,14 +12,9 @@ module Twitch.Path
        , canonicalizeDirPath
        , canonicalizePath
        ) where
-
+import Filesystem.Path.CurrentOS ( FilePath, encodeString, decodeString, (</>) )
 import Prelude hiding (FilePath)
-
 import Control.Monad
--- import Filesystem
--- import Filesystem.Path hiding (concat)
-import Filesystem.Path.CurrentOS hiding (concat)
-
 import qualified Filesystem as FS
 import qualified Filesystem.Path as FP
 
