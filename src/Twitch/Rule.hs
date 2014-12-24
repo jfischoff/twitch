@@ -90,11 +90,11 @@ data RuleIssue
 compilePattern :: FilePath 
                -> PatternText 
                -> Either RuleIssue (FilePath -> Bool)
-compilePattern currentDir pattern = left (PatternCompliationFailed pattern) $ do 
+compilePattern currentDir pat = left (PatternCompliationFailed pat) $ do 
    -- TODO is this way of adding the current directory cross platfrom okay?
    -- Does the globbing even work on windows
    
-   let absolutePattern = encodeString currentDir <> "/" <> pattern
+   let absolutePattern = encodeString currentDir <> "/" <> pat
    p <- tryCompileWith compDefault absolutePattern
    let test = match $ simplify p
    return $ \x -> test $ encodeString x

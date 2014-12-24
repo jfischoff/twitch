@@ -57,7 +57,7 @@ library
                   , MultiParamTypeClasses
                   , TypeSynonymInstances
                   , TemplateHaskell
-  build-depends: base >=4.5 && <4.8
+  build-depends: base >=4.5 && <4.9
                , system-filepath
                , transformers 
                , directory 
