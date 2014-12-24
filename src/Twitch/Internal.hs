@@ -6,7 +6,7 @@ module Twitch.Internal where
 import Control.Applicative ( Applicative )
 import Filesystem.Path ( FilePath )
 import Control.Monad.Trans.State as State
-    ( StateT(StateT), State, put, modify, execState )
+    ( State, put, modify, execState )
 import qualified Twitch.Rule as Rule
     ( addF, modifyF, deleteF, nameF )
 import Twitch.Rule ( Rule )
