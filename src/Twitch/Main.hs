@@ -192,21 +192,27 @@ toDB amount dbtype = case dbtype of
   Debounce        -> FS.Debounce $ fromRational $ toRational amount
   NoDebounce      -> FS.NoDebounce
 
+makeAbsolute :: F.FilePath -> F.FilePath -> F.FilePath
+makeAbsolute currentDir path = 
+  if F.relative path then
+      currentDir F.</> path
+  else 
+      path
+
 optionsToConfig :: Options -> IO (FilePath, IR.Config, Maybe Handle)
 optionsToConfig Options {..} = do
   actualCurrentDir <- getCurrentDirectory
   let currentDir' = fromMaybe actualCurrentDir currentDir
       dirsToWatch' = if null dirsToWatch then
-                       [currentDir']
+                       [F.decodeString currentDir']
                      else
-                       dirsToWatch
+                       map (makeAbsolute (F.decodeString currentDir') . F.decodeString) dirsToWatch
 
   (logger, mhandle) <- toLogger (fromMaybe "log.txt" logFile) log
-  let encodedDirs = map F.decodeString dirsToWatch'
   dirsToWatch'' <- if recurseThroughDirectories then
-                   (encodedDirs ++) <$> concatMapM findAllDirs encodedDirs
+                   (dirsToWatch' ++) <$> concatMapM findAllDirs dirsToWatch'
                  else
-                   return encodedDirs
+                   return dirsToWatch'
 
   let watchConfig = FS.WatchConfig
         { FS.confDebounce     = toDB debounceAmount debounce
