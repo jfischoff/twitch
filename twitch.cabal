@@ -67,6 +67,16 @@ library
                , fsnotify
                , optparse-applicative
                , system-fileio
-  hs-source-dirs:      src
-  default-language:    Haskell2010
-  ghc-options: -Wall -Werror -ddump-minimal-imports
+  hs-source-dirs: src
+  default-language: Haskell2010
+  ghc-options: -Wall -Werror
+  
+test-suite unit-tests
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  hs-source-dirs: tests
+  default-language: Haskell2010
+  build-depends: base
+               , twitch
+               , hspec
+               , QuickCheck >= 2.7

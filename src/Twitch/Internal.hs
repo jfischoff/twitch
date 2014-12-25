@@ -9,7 +9,7 @@ import Control.Monad.Trans.State as State
 import qualified Twitch.Rule as Rule
     ( addF, modifyF, deleteF, nameF )
 import Twitch.Rule ( Rule )
-import Data.Monoid ( Monoid(mempty) )
+import Data.Monoid ( Monoid(mempty, mappend) )
 import Data.String ( IsString(..) )
 import Prelude hiding (FilePath)
 
@@ -19,6 +19,10 @@ newtype DepM a = DepM { unDepM :: State [Rule] a}
            , Applicative
            , Monad
            )
+
+instance Monoid a => Monoid (DepM a) where
+  mempty = return mempty
+  mappend x y = x >> y
 
 -- | This is the key type of the package, it is where rules are accumulated.
 type Dep = DepM ()
