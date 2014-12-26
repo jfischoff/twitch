@@ -78,11 +78,12 @@ data Options = Options
   --   This cooresponds to the --log-file or -f argument
   , dirsToWatch               :: [FilePath]
   -- ^ The directories to watch.
-  --   This cooresponds to the --directories and -d argument
+  --   This cooresponds to the --directories and -d argument.
+  --   By default this is empty and the current directory is used
   , recurseThroughDirectories :: Bool
   -- ^ If true, main will recurse throug all subdirectories of the 'dirsToWatch'
   --   field. Otherwise the 'dirsToWatch' will be used literally.
-  --   By default this is empty and the currentDirectory is used.
+  --   By default this is true, and disabled with the --no-recurse-flag
   , debounce                  :: DebounceType
   -- ^ This corresponds to the debounce type used in the fsnotify library
   --   The argument for default main is --debounce or -b .
@@ -97,8 +98,8 @@ data Options = Options
   -- ^ poll interval if polling is used.
   --   This cooresponds to the --poll-interval or -i argument
   , usePolling                :: Bool
-  -- ^ If true polling is used instead of events.
-  --   This cooresponds to the --poll or -p argument
+  -- ^ Sets polling to true if used
+  --   This cooresponds to the --should-poll or -p flag
   , currentDir                :: Maybe FilePath
   -- ^ The current directory to append to the glob patterns. If Nothing then
   --   the value is whatever is returned by 'getCurrentDirectory'
