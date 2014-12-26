@@ -8,11 +8,8 @@ import Twitch.Main
 import Options.Applicative.Builder
 import Prelude hiding (log)
 
-
-
 runParser :: [String] -> Maybe Options
 runParser xs = getParseResult $ execParserPure (prefs mempty) opts xs
-
 
 -- testParser :: String -> 
 testParser f initial expected 
@@ -20,8 +17,6 @@ testParser f initial expected
   
 testParserMulti f xs expected 
   = fmap f (runParser xs) `shouldBe` Just expected
-  
-
 
 tests :: Spec
 tests = do
@@ -41,17 +36,13 @@ tests = do
     it "parses the log-file option (short)" $ 
       testParser logFile "-f./log.txt"          $ Just "./log.txt"
     
-    it "parses the directories option" $ do
-      testParser dirsToWatch "--directory=./src" ["./src"]
-      testParser dirsToWatch "-d./src"             ["./src"]
-      testParserMulti dirsToWatch ["--directory=./src", "--directory=./temp"] 
-                                  ["./src", "./temp"]
-      testParserMulti dirsToWatch ["-d./src", "-d./temp"] ["./src", "./temp"]
-      
+    it "parses the root option" $ do
+      testParser root "--root=./src" $ Just "./src"
+      testParser root "-r./src"      $ Just "./src"
     
     it "parses the recurse option" $ do
       testParser recurseThroughDirectories "--no-recurse" False
-      testParser recurseThroughDirectories "-r"  False
+      testParser recurseThroughDirectories "-n"  False
 
     it "parses the debounce option" $ do
       testParser debounce "--debounce=DebounceDefault" DebounceDefault
@@ -74,9 +65,6 @@ tests = do
       testParser usePolling "--should-poll" True      
       testParser usePolling "-p"     True
 
-    it "parses the current directory" $ do
-      testParser currentDir "--current-dir=./src" $ Just "./src"
-      testParser currentDir "-c./src"             $ Just "./src"
       
       
     

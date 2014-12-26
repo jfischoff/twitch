@@ -22,8 +22,8 @@ run dep =  do
   runWithConfig currentDir (def { logger = print, dirs = dirs' }) dep
 
 runWithConfig :: FilePath -> Config -> Dep -> IO WatchManager
-runWithConfig currentDir config dep = do
-  let (_issues, rules) = depToRules currentDir dep
+runWithConfig root config dep = do
+  let (_issues, rules) = depToRules root dep
   -- TODO handle the issues somehow
   -- Log and perhaps error
   setupRules config rules

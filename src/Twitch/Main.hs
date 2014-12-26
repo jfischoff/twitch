@@ -21,7 +21,6 @@ import Options.Applicative
     , fullDesc
     , auto
     , eitherReader
-    , many
     , switch
     , flag
     , ParserInfo
@@ -76,9 +75,9 @@ data Options = Options
   -- ^ The file to log to
   --   This is only used if the 'log' field is set to "LogToFile".
   --   This cooresponds to the --log-file or -f argument
-  , dirsToWatch               :: [FilePath]
-  -- ^ The directories to watch.
-  --   This cooresponds to the --directories and -d argument.
+  , root                      :: Maybe FilePath
+  -- ^ The root directory to watch.
+  --   This cooresponds to the --root and -r argument.
   --   By default this is empty and the current directory is used
   , recurseThroughDirectories :: Bool
   -- ^ If true, main will recurse throug all subdirectories of the 'dirsToWatch'
@@ -100,10 +99,6 @@ data Options = Options
   , usePolling                :: Bool
   -- ^ Sets polling to true if used
   --   This cooresponds to the --should-poll or -p flag
-  , currentDir                :: Maybe FilePath
-  -- ^ The current directory to append to the glob patterns. If Nothing then
-  --   the value is whatever is returned by 'getCurrentDirectory'
-  --   This cooresponds to the --current-dir or -c arguments
   }
 
 data DebounceType
@@ -119,13 +114,12 @@ instance Default Options where
   def = Options
     { log                       = NoLogger
     , logFile                   = Nothing
-    , dirsToWatch               = []
+    , root                      = Nothing
     , recurseThroughDirectories = True
     , debounce                  = DebounceDefault
     , debounceAmount            = 0
     , pollInterval              = 10^(6 :: Int) -- 1 second
     , usePolling                = False
-    , currentDir                = Nothing
     }
 
 dropDoubleQuotes :: String -> String
@@ -163,16 +157,16 @@ pOptions
        <> help "Log file"
        <> value (logFile def)
         )
-  <*> many (option (eitherReader readFilePath)
-        ( long "directory"
-       <> short 'd'
-       <> metavar "DIRECTORIES"
-       <> help "Directories to watch"
+  <*> option (Just <$> eitherReader readFilePath)
+        ( long "root"
+       <> short 'r'
+       <> metavar "ROOT"
+       <> help "Root directory to watch"
+       <> value (root def)
         )
-      )
   <*> flag True False
         ( long "no-recurse"
-       <> short 'r'
+       <> short 'n'
        <> help "flag to turn off recursing"
         )
   <*> option auto
@@ -201,13 +195,6 @@ pOptions
        <> short 'p'
        <> help "Whether to use polling or not. Off by default"
         )
-  <*> option (Just <$> eitherReader readFilePath)
-        ( long "current-dir"
-       <> short 'c'
-       <> metavar "CURRENT_DIR"
-       <> help "Directory to append to the glob patterns"
-       <> value (currentDir def)
-        )
 
 -- This is like run, but the config params can be over written from the defaults
 
@@ -226,18 +213,14 @@ makeAbsolute currentDir path =
 
 optionsToConfig :: Options -> IO (FilePath, IR.Config, Maybe Handle)
 optionsToConfig Options {..} = do
-  actualCurrentDir <- F.decodeString <$> getCurrentDirectory
-  let currentDir' = fromMaybe actualCurrentDir currentDir
-      dirsToWatch' = if null dirsToWatch then
-                       [currentDir']
-                     else
-                       map (makeAbsolute currentDir') dirsToWatch
+  currentDir <- F.decodeString <$> getCurrentDirectory
+  let root' = makeAbsolute currentDir $ fromMaybe currentDir root
 
   (logger, mhandle) <- toLogger (fromMaybe "log.txt" logFile) log
-  dirsToWatch'' <- if recurseThroughDirectories then
-                   (dirsToWatch' ++) <$> concatMapM findAllDirs dirsToWatch'
+  dirsToWatch <- if recurseThroughDirectories then
+                   (root' :) <$> findAllDirs root'
                  else
-                   return dirsToWatch'
+                   return [root']
 
   let watchConfig = FS.WatchConfig
         { FS.confDebounce     = toDB debounceAmount debounce
@@ -247,10 +230,10 @@ optionsToConfig Options {..} = do
 
   let config = IR.Config
         { logger      = logger
-        , dirs        = dirsToWatch''
+        , dirs        = dirsToWatch
         , watchConfig = watchConfig
         }
-  return (currentDir', config, mhandle)
+  return (root', config, mhandle)
 
 opts :: ParserInfo Options
 opts = info (helper <*> pOptions)
@@ -273,8 +256,8 @@ defaultMain dep = do
 -- | A main file that uses manually supplied options instead of parsing the passed in arguments.
 defaultMainWithOptions :: Options -> Dep -> IO ()
 defaultMainWithOptions options dep = do
-  (currentDir, config, mhandle) <- optionsToConfig options
-  manager <- runWithConfig currentDir config dep
+  (root, config, mhandle) <- optionsToConfig options
+  manager <- runWithConfig root config dep
   putStrLn "Type anything to quit"
   _ <- getLine
   for_ mhandle hClose
