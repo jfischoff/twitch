@@ -1,25 +1,31 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Twitch.Main where
-import Prelude hiding (log)
+import Prelude hiding (log, FilePath)
 import Data.Monoid ( (<>) )
 import Options.Applicative
-    ( Applicative((<*>)),
-      (<$>),
-      Parser,
-      helper,
-      execParser,
-      value,
-      short,
-      progDesc,
-      option,
-      metavar,
-      long,
-      info,
-      help,
-      header,
-      fullDesc,
-      auto )
+    ( Applicative((<*>))
+    , (<$>)
+    , Parser
+    , helper
+    , execParser
+    , value
+    , short
+    , progDesc
+    , option
+    , metavar
+    , long
+    , info
+    , help
+    , header
+    , fullDesc
+    , auto
+    , eitherReader
+    , many
+    , switch
+    , flag
+    , ParserInfo
+    )
 import Data.Default ( Default(..) )
 import qualified System.FSNotify as FS
 import Twitch.Path ( findAllDirs )
@@ -35,6 +41,7 @@ import Twitch.Run ( runWithConfig )
 import Twitch.Internal ( Dep )
 import System.Directory ( getCurrentDirectory )
 import Data.Maybe ( fromMaybe )
+import Filesystem.Path (FilePath)
 import qualified Filesystem.Path.CurrentOS as F
 import Control.Monad ( liftM )
 -- parse the command line
@@ -55,44 +62,44 @@ toLogger :: FilePath
 toLogger filePath lt = case lt of
   LogToStdout -> return (print, Nothing)
   LogToFile -> do
-    handle <- openFile filePath AppendMode
+    handle <- openFile (F.encodeString filePath) AppendMode
     return (hPrint handle, Just handle)
   NoLogger -> return (const $ return (), Nothing)
 
 data Options = Options
-  { log          :: LoggerType
+  { log                       :: LoggerType
   -- ^ The logger type.
   --   This cooresponds to the --log or -l argument. The valid options
   --   are "LogToStdout", "LogToFile", and "NoLogger"
   --   If "LogToFile" a file can provide with the 'logFile' field.
-  , logFile      :: Maybe FilePath
+  , logFile                   :: Maybe FilePath
   -- ^ The file to log to
   --   This is only used if the 'log' field is set to "LogToFile".
   --   This cooresponds to the --log-file or -f argument
-  , dirsToWatch  :: [FilePath]
+  , dirsToWatch               :: [FilePath]
   -- ^ The directories to watch.
   --   This cooresponds to the --directories and -d argument
   , recurseThroughDirectories :: Bool
   -- ^ If true, main will recurse throug all subdirectories of the 'dirsToWatch'
   --   field. Otherwise the 'dirsToWatch' will be used literally.
   --   By default this is empty and the currentDirectory is used.
-  , debounce     :: DebounceType
+  , debounce                  :: DebounceType
   -- ^ This corresponds to the debounce type used in the fsnotify library
   --   The argument for default main is --debounce or -b .
   --   Valid options are "DebounceDefault", "Debounce", "NoDebounce"
   --   If "Debounce" is used then a debounce amount must be specified with the
   --   'debounceAmount'
-  , debounceAmount :: Double
+  , debounceAmount            :: Double
   -- ^ The amount to debounce. This is only meaningful when 'debounce' is set
   --   to 'Debounce'.
   --   It cooresponds to the --debounce-amount or -a argument
-  , pollInterval :: Int
+  , pollInterval              :: Int
   -- ^ poll interval if polling is used.
   --   This cooresponds to the --poll-interval or -i argument
-  , usePolling   :: Bool
+  , usePolling                :: Bool
   -- ^ If true polling is used instead of events.
   --   This cooresponds to the --poll or -p argument
-  , currentDir   :: Maybe FilePath
+  , currentDir                :: Maybe FilePath
   -- ^ The current directory to append to the glob patterns. If Nothing then
   --   the value is whatever is returned by 'getCurrentDirectory'
   --   This cooresponds to the --current-dir or -c arguments
@@ -103,6 +110,9 @@ data DebounceType
   | Debounce
   | NoDebounce
   deriving (Eq, Show, Read, Ord)
+
+-- use the new vinyl for the options
+-- the you get the monoid instance for free
 
 instance Default Options where
   def = Options
@@ -117,6 +127,24 @@ instance Default Options where
     , currentDir                = Nothing
     }
 
+dropDoubleQuotes :: String -> String
+dropDoubleQuotes [] = []
+dropDoubleQuotes (x : xs) 
+  | x == '\"' = xs
+  | otherwise = x : xs
+
+stripDoubleQuotes :: String -> String
+stripDoubleQuotes = dropDoubleQuotes . reverse . dropDoubleQuotes . reverse
+    
+-- strip quotes if they are there
+readFilePath :: String -> Either String FilePath
+readFilePath xs = 
+  let filePath = F.decodeString $ stripDoubleQuotes xs
+  in if F.valid filePath then
+        Right filePath
+     else
+        Left $ "invalid filePath " ++ xs 
+
 pOptions :: Parser Options
 pOptions
    =  Options
@@ -127,32 +155,30 @@ pOptions
        <> help "Type of logger. Valid options are LogToStdout | LogToFile | NoLogger"
        <> value (log def)
         )
-  <*> option auto
+  <*> option (Just <$> eitherReader readFilePath)
         ( long "log-file"
        <> short 'f'
        <> metavar "LOG_FILE"
        <> help "Log file"
        <> value (logFile def)
         )
-  <*> option auto
-        ( long "directories"
+  <*> many (option (eitherReader readFilePath)
+        ( long "directory"
        <> short 'd'
        <> metavar "DIRECTORIES"
        <> help "Directories to watch"
-       <> value (dirsToWatch def)
         )
-  <*> option auto
-        ( long "recurse"
+      )
+  <*> flag True False
+        ( long "no-recurse"
        <> short 'r'
-       <> metavar "RECURSE"
-       <> help "Boolean to recurse or directories or not"
-       <> value (recurseThroughDirectories def)
+       <> help "flag to turn off recursing"
         )
   <*> option auto
         ( long "debounce"
        <> short 'b'
        <> metavar "DEBOUNCE"
-       <> help "Target for the greeting"
+       <> help "Type of debouncing. Valid choices are DebounceDefault | Debounce | NoDebounce"
        <> value (debounce def)
         )
   <*> option auto
@@ -169,14 +195,12 @@ pOptions
        <> help "Poll interval if polling is used"
        <> value (pollInterval def)
         )
-  <*> option auto
-        ( long "poll"
+  <*> switch
+        ( long "should-poll"
        <> short 'p'
-       <> metavar "POLL"
-       <> help "Whether to use polling or not"
-       <> value (usePolling def)
+       <> help "Whether to use polling or not. Off by default"
         )
-  <*> option auto
+  <*> option (Just <$> eitherReader readFilePath)
         ( long "current-dir"
        <> short 'c'
        <> metavar "CURRENT_DIR"
@@ -201,12 +225,12 @@ makeAbsolute currentDir path =
 
 optionsToConfig :: Options -> IO (FilePath, IR.Config, Maybe Handle)
 optionsToConfig Options {..} = do
-  actualCurrentDir <- getCurrentDirectory
+  actualCurrentDir <- F.decodeString <$> getCurrentDirectory
   let currentDir' = fromMaybe actualCurrentDir currentDir
       dirsToWatch' = if null dirsToWatch then
-                       [F.decodeString currentDir']
+                       [currentDir']
                      else
-                       map (makeAbsolute (F.decodeString currentDir') . F.decodeString) dirsToWatch
+                       map (makeAbsolute currentDir') dirsToWatch
 
   (logger, mhandle) <- toLogger (fromMaybe "log.txt" logFile) log
   dirsToWatch'' <- if recurseThroughDirectories then
@@ -227,6 +251,13 @@ optionsToConfig Options {..} = do
         }
   return (currentDir', config, mhandle)
 
+opts :: ParserInfo Options
+opts = info (helper <*> pOptions)
+      ( fullDesc
+     <> progDesc "twitch"
+     <> header "a file watcher"
+      )
+
 -- | Simplest way to create a file watcher app. Set your main equal to defaultMain
 --   and you are good to go. See the module documentation for examples.
 --
@@ -235,11 +266,6 @@ optionsToConfig Options {..} = do
 --   executable made with defaultMain with the --help argument.
 defaultMain :: Dep -> IO ()
 defaultMain dep = do
-  let opts = info (helper <*> pOptions)
-        ( fullDesc
-       <> progDesc "twitch"
-       <> header "a file watcher"
-        )
   options <- execParser opts
   defaultMainWithOptions options dep
 
@@ -247,8 +273,7 @@ defaultMain dep = do
 defaultMainWithOptions :: Options -> Dep -> IO ()
 defaultMainWithOptions options dep = do
   (currentDir, config, mhandle) <- optionsToConfig options
-  let currentDir' = F.decodeString currentDir
-  manager <- runWithConfig currentDir' config dep
+  manager <- runWithConfig currentDir config dep
   putStrLn "Type anything to quit"
   _ <- getLine
   for_ mhandle hClose
