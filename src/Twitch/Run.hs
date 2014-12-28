@@ -18,7 +18,7 @@ import Data.Default ( Default(def) )
 run :: Dep -> IO WatchManager
 run dep =  do
   currentDir <- decodeString <$> getCurrentDirectory
-  dirs'       <- findAllDirs currentDir
+  dirs'      <- findAllDirs currentDir
   runWithConfig currentDir (def { logger = print, dirs = dirs' }) dep
 
 runWithConfig :: FilePath -> Config -> Dep -> IO WatchManager

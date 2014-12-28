@@ -52,7 +52,7 @@ instance Show InternalRule where
 
 toInternalRule :: FilePath -> Rule -> Either RuleIssue InternalRule
 toInternalRule currentDir rule = do
-  test <- Rule.compilePattern currentDir $ Rule.pattern rule
+  test <- Rule.compilePattern $ Rule.pattern $ Rule.makeAbsolute currentDir rule
   return InternalRule 
     { name     = Rule.name rule
     , fileTest = \x _ -> test x
