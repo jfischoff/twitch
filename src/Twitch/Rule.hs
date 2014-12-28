@@ -4,7 +4,7 @@ module Twitch.Rule where
 import Prelude hiding (FilePath)
 import Control.Monad ( void )
 import Filesystem.Path ( FilePath )
-import Filesystem.Path.CurrentOS ( encodeString )
+import Filesystem.Path.CurrentOS ( encodeString, relative, decodeString )
 import System.FilePath.Glob ( simplify, match, tryCompileWith, compDefault )
 import Data.Monoid ( (<>) )
 import Data.String ( IsString(..) )
@@ -85,16 +85,22 @@ nameF = flip (|#)
 
 data RuleIssue
   = PatternCompliationFailed PatternText String
-  deriving Show
+  deriving (Show, Eq)
+  
+makeAbsolutePath :: FilePath -> FilePath -> FilePath
+makeAbsolutePath currentDir path = 
+  if relative path then 
+    currentDir <> path
+  else
+    path
+  
+makeAbsolute :: FilePath -> Rule -> Rule
+makeAbsolute currentDir rule 
+  = rule { pattern = encodeString . makeAbsolutePath currentDir . decodeString $ pattern rule }
 
-compilePattern :: FilePath 
-               -> PatternText 
+compilePattern :: PatternText 
                -> Either RuleIssue (FilePath -> Bool)
-compilePattern currentDir pat = left (PatternCompliationFailed pat) $ do 
-   -- TODO is this way of adding the current directory cross platfrom okay?
-   -- Does the globbing even work on windows
-   
-   let absolutePattern = encodeString currentDir <> "/" <> pat
-   p <- tryCompileWith compDefault absolutePattern
+compilePattern pat = left (PatternCompliationFailed pat) $ do 
+   p <- tryCompileWith compDefault pat
    let test = match $ simplify p
    return $ \x -> test $ encodeString x
