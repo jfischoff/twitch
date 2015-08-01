@@ -1,7 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Twitch.InternalRule where
-import Filesystem.Path ( FilePath )
+import System.FilePath ( FilePath )
 import Data.Time.Clock ( UTCTime )
 import System.FSNotify
     ( Event(..),
@@ -12,7 +12,7 @@ import System.FSNotify
       defaultConfig )
 import Data.Default ( Default(..) )
 import Control.Monad ( when, void, forM_ )
-import Data.Monoid ( Monoid(mempty), (<>) )
+import Data.Monoid ( (<>) )
 import Twitch.Rule ( Rule, RuleIssue )
 import Prelude hiding (FilePath)
 import qualified Twitch.Rule as Rule
@@ -122,7 +122,7 @@ testAndFireRule Config {..} event rule = do
     fireRule event rule 
 
 -- TODO in the future this should use the recursive directory functions
---      when appropiate
+--      when appropriate
 -- | Start watching a directory, and run the rules on it.
 setupRuleForDir :: Config -> WatchManager -> [InternalRule] -> FilePath -> IO ()
 setupRuleForDir config@(Config {..}) man rules dirPath =

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Tests.Twitch.Run where
 import Test.Hspec
-import Filesystem.Path ( FilePath )
+import System.FilePath ( FilePath )
 import Control.Arrow (second)
 import qualified Twitch.InternalRule as IR
 import Twitch.Run
