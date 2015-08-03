@@ -12,7 +12,7 @@ import System.FSNotify
       defaultConfig )
 import Data.Default ( Default(..) )
 import Control.Monad ( when, void, forM_ )
-import Data.Monoid ( (<>) )
+import Data.Monoid
 import Twitch.Rule ( Rule, RuleIssue )
 import Prelude hiding (FilePath)
 import qualified Twitch.Rule as Rule

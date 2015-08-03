@@ -1,8 +1,8 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Twitch.Main where
-import Prelude hiding (log, FilePath)
-import Data.Monoid ( (<>) )
+import Control.Applicative -- satisfy GHC < 7.10
+import Data.Monoid
 import Options.Applicative
   ( Parser
   , helper
@@ -46,6 +46,8 @@ import System.FilePath
   , isValid
   )
 import Control.Monad ( liftM )
+-- Moved here to suppress redundant import warnings for GHC > 7.10
+import Prelude hiding (log, FilePath)
 -- parse the command line
 --
 

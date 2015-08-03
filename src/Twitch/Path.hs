@@ -11,7 +11,7 @@ module Twitch.Path
        , canonicalizeDirPath
        , canonicalizePath
        ) where
-import Prelude hiding (FilePath)
+import Control.Applicative -- satisfy GHC < 7.10
 import Control.Monad
 import System.Directory
   ( canonicalizePath
@@ -24,6 +24,8 @@ import System.FilePath
   , (</>)
   , addTrailingPathSeparator
   )
+-- Moved here to suppress redundant import warnings for GHC > 7.10
+import Prelude hiding (FilePath)
 
 
 getDirectoryContentsPath :: FilePath -> IO [FilePath]
@@ -61,7 +63,7 @@ findAllDirs path = do
 
 findFiles :: Bool -> FilePath -> IO [FilePath]
 findFiles True path  = findAllFiles       =<< canonicalizeDirPath path
-findFiles False path = findImmediateFiles =<<  canonicalizeDirPath path
+findFiles False path = findImmediateFiles =<< canonicalizeDirPath path
 
 findDirs :: Bool -> FilePath -> IO [FilePath]
 findDirs True path  = findAllDirs       =<< canonicalizeDirPath path
@@ -69,5 +71,5 @@ findDirs False path = findImmediateDirs =<< canonicalizeDirPath path
 
 
 canonicalizeDirPath :: FilePath -> IO FilePath
-canonicalizeDirPath path = addTrailingPathSeparator `fmap` canonicalizePath path
+canonicalizeDirPath path = addTrailingPathSeparator <$> canonicalizePath path
 
