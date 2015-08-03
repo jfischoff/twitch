@@ -3,7 +3,7 @@
 module Tests.Twitch.Rule where
 import Test.Hspec
 import Twitch.Rule  
-import Filesystem.Path
+import System.FilePath
 import Data.IORef
 import Data.Default
 
@@ -49,7 +49,7 @@ tests = do
     testAddModify (flip addModifyF)
   describe "nameF" $ it " sets the name member" $ testName $ flip nameF
   
-  describe "makeAbosolutePath" $ do
+  describe "makeAbsolutePath" $ do
     it "doesn't change an absolute path" $ 
       makeAbsolutePath "/usr" "/home" `shouldBe` "/home"
     it "adds the current directory if it is relative" $ do

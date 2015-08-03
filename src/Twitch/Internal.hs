@@ -2,15 +2,15 @@
 {-# LANGUAGE OverloadedStrings               #-}
 {-# LANGUAGE FlexibleInstances               #-}
 module Twitch.Internal where
-import Control.Applicative ( Applicative )
-import Filesystem.Path ( FilePath )
+import System.FilePath ( FilePath )
 import Control.Monad.Trans.State as State
     ( State, put, modify, execState )
 import qualified Twitch.Rule as Rule
     ( addF, modifyF, deleteF, nameF )
 import Twitch.Rule ( Rule )
-import Data.Monoid ( Monoid(mempty, mappend) )
 import Data.String ( IsString(..) )
+import Control.Applicative -- satisfy GHC < 7.10
+import Data.Monoid         -- satisfy GHC < 7.10
 import Prelude hiding (FilePath)
 
 -- | A polymorphic 'Dep'. Exported for completeness, ignore. 

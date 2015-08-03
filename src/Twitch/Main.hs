@@ -1,48 +1,53 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Twitch.Main where
-import Prelude hiding (log, FilePath)
-import Data.Monoid ( (<>) )
+import Control.Applicative -- satisfy GHC < 7.10
+import Data.Monoid
 import Options.Applicative
-    ( Applicative((<*>))
-    , (<$>)
-    , Parser
-    , helper
-    , execParser
-    , value
-    , short
-    , progDesc
-    , option
-    , metavar
-    , long
-    , info
-    , help
-    , header
-    , fullDesc
-    , auto
-    , eitherReader
-    , switch
-    , flag
-    , ParserInfo
-    )
+  ( Parser
+  , helper
+  , execParser
+  , value
+  , short
+  , progDesc
+  , option
+  , metavar
+  , long
+  , info
+  , help
+  , header
+  , fullDesc
+  , auto
+  , eitherReader
+  , switch
+  , flag
+  , ParserInfo
+  )
 import Data.Default ( Default(..) )
 import qualified System.FSNotify as FS
 import Twitch.Path ( findAllDirs )
 import qualified Twitch.InternalRule as IR
 import System.IO
-    ( IOMode(AppendMode),
-      Handle,
-      hPrint,
-      openFile,
-      hClose )
+  ( IOMode(AppendMode)
+  , Handle
+  , hPrint
+  , openFile
+  , hClose
+  )
 import Data.Foldable ( for_ )
 import Twitch.Run ( runWithConfig )
 import Twitch.Internal ( Dep )
 import System.Directory ( getCurrentDirectory )
 import Data.Maybe ( fromMaybe )
-import Filesystem.Path (FilePath)
-import qualified Filesystem.Path.CurrentOS as F
+import System.FilePath
+  ( FilePath
+  , (</>)
+  , isRelative
+  , isValid
+  )
 import Control.Monad ( liftM )
+-- Moved here to suppress redundant import warnings for GHC > 7.10
+import Prelude hiding (log, FilePath)
 -- parse the command line
 --
 
@@ -61,44 +66,44 @@ toLogger :: FilePath
 toLogger filePath lt = case lt of
   LogToStdout -> return (print, Nothing)
   LogToFile -> do
-    handle <- openFile (F.encodeString filePath) AppendMode
+    handle <- openFile filePath AppendMode
     return (hPrint handle, Just handle)
   NoLogger -> return (const $ return (), Nothing)
 
 data Options = Options
   { log                       :: LoggerType
   -- ^ The logger type.
-  --   This cooresponds to the --log or -l argument. The valid options
+  --   This corresponds to the --log or -l argument. The valid options
   --   are "LogToStdout", "LogToFile", and "NoLogger"
   --   If "LogToFile" a file can provide with the 'logFile' field.
   , logFile                   :: Maybe FilePath
-  -- ^ The file to log to
+  -- ^ The file to log to.
   --   This is only used if the 'log' field is set to "LogToFile".
-  --   This cooresponds to the --log-file or -f argument
+  --   This corresponds to the --log-file or -f argument.
   , root                      :: Maybe FilePath
   -- ^ The root directory to watch.
-  --   This cooresponds to the --root and -r argument.
-  --   By default this is empty and the current directory is used
+  --   This corresponds to the --root and -r argument.
+  --   By default this is empty and the current directory is used.
   , recurseThroughDirectories :: Bool
-  -- ^ If true, main will recurse throug all subdirectories of the 'dirsToWatch'
+  -- ^ If true, main will recurse through all subdirectories of the 'dirsToWatch'
   --   field. Otherwise the 'dirsToWatch' will be used literally.
-  --   By default this is true, and disabled with the --no-recurse-flag
+  --   By default this is true, and disabled with the --no-recurse-flag .
   , debounce                  :: DebounceType
   -- ^ This corresponds to the debounce type used in the fsnotify library
   --   The argument for default main is --debounce or -b .
-  --   Valid options are "DebounceDefault", "Debounce", "NoDebounce"
-  --   If "Debounce" is used then a debounce amount must be specified with the
-  --   'debounceAmount'
+  --   Valid options are "DebounceDefault", "Debounce", "NoDebounce".
+  --   If "Debounce" is used, then a debounce amount must be specified with the
+  --   'debounceAmount'.
   , debounceAmount            :: Double
   -- ^ The amount to debounce. This is only meaningful when 'debounce' is set
   --   to 'Debounce'.
-  --   It cooresponds to the --debounce-amount or -a argument
+  --   It corresponds to the --debounce-amount or -a argument.
   , pollInterval              :: Int
   -- ^ poll interval if polling is used.
-  --   This cooresponds to the --poll-interval or -i argument
+  --   This corresponds to the --poll-interval or -i argument.
   , usePolling                :: Bool
-  -- ^ Sets polling to true if used
-  --   This cooresponds to the --should-poll or -p flag
+  -- ^ Sets polling to true if used.
+  --   This corresponds to the --should-poll or -p flag.
   }
 
 data DebounceType
@@ -134,8 +139,8 @@ stripDoubleQuotes = dropDoubleQuotes . reverse . dropDoubleQuotes . reverse
 -- strip quotes if they are there
 readFilePath :: String -> Either String FilePath
 readFilePath xs = 
-  let filePath = F.decodeString $ stripDoubleQuotes xs
-  in if F.valid filePath then
+  let filePath = stripDoubleQuotes xs
+  in if isValid filePath then
         Right filePath
      else
         Left $ "invalid filePath " ++ xs 
@@ -204,16 +209,16 @@ toDB amount dbtype = case dbtype of
   Debounce        -> FS.Debounce $ fromRational $ toRational amount
   NoDebounce      -> FS.NoDebounce
 
-makeAbsolute :: F.FilePath -> F.FilePath -> F.FilePath
+makeAbsolute :: FilePath -> FilePath -> FilePath
 makeAbsolute currentDir path = 
-  if F.relative path then
-      currentDir F.</> path
+  if isRelative path then
+      currentDir </> path
   else 
       path
 
 optionsToConfig :: Options -> IO (FilePath, IR.Config, Maybe Handle)
 optionsToConfig Options {..} = do
-  currentDir <- F.decodeString <$> getCurrentDirectory
+  currentDir <- getCurrentDirectory
   let root' = makeAbsolute currentDir $ fromMaybe currentDir root
 
   (logger, mhandle) <- toLogger (fromMaybe "log.txt" logFile) log
@@ -262,6 +267,4 @@ defaultMainWithOptions options dep = do
   _ <- getLine
   for_ mhandle hClose
   FS.stopManager manager
-
-
 

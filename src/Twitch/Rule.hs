@@ -3,10 +3,8 @@
 module Twitch.Rule where
 import Prelude hiding (FilePath)
 import Control.Monad ( void )
-import Filesystem.Path ( FilePath )
-import Filesystem.Path.CurrentOS ( encodeString, relative, decodeString )
+import System.FilePath ( FilePath, isRelative, (</>) )
 import System.FilePath.Glob ( simplify, match, tryCompileWith, compDefault )
-import Data.Monoid ( (<>) )
 import Data.String ( IsString(..) )
 import Data.Default ( Default(..) )
 import Control.Arrow ( ArrowChoice(left) )
@@ -89,18 +87,16 @@ data RuleIssue
   
 makeAbsolutePath :: FilePath -> FilePath -> FilePath
 makeAbsolutePath currentDir path = 
-  if relative path then 
-    currentDir <> path
+  if isRelative path then
+    currentDir </> path
   else
     path
   
 makeAbsolute :: FilePath -> Rule -> Rule
 makeAbsolute currentDir rule 
-  = rule { pattern = encodeString . makeAbsolutePath currentDir . decodeString $ pattern rule }
+  = rule { pattern = makeAbsolutePath currentDir $ pattern rule }
 
 compilePattern :: PatternText 
                -> Either RuleIssue (FilePath -> Bool)
 compilePattern pat = left (PatternCompliationFailed pat) $ do 
-   p <- tryCompileWith compDefault pat
-   let test = match $ simplify p
-   return $ \x -> test $ encodeString x
+  tryCompileWith compDefault pat >>= return . match . simplify

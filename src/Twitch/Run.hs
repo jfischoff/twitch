@@ -5,9 +5,7 @@ import Twitch.InternalRule
     ( Config(dirs, logger), InternalRule, toInternalRule, setupRules )
 import Twitch.Rule ( RuleIssue )
 import Data.Either ( partitionEithers )
-import Filesystem.Path ( FilePath )
-import Filesystem.Path.CurrentOS ( decodeString )
-import Control.Applicative ( (<$>) )
+import System.FilePath ( FilePath )
 import System.FSNotify ( WatchManager )
 import System.Directory ( getCurrentDirectory )
 import Twitch.Path ( findAllDirs )
@@ -17,7 +15,7 @@ import Data.Default ( Default(def) )
 
 run :: Dep -> IO WatchManager
 run dep =  do
-  currentDir <- decodeString <$> getCurrentDirectory
+  currentDir <- getCurrentDirectory
   dirs'      <- findAllDirs currentDir
   runWithConfig currentDir (def { logger = print, dirs = dirs' }) dep
 
@@ -30,16 +28,9 @@ runWithConfig root config dep = do
 
 depToRulesWithCurrentDir :: Dep -> IO ([RuleIssue], [InternalRule])
 depToRulesWithCurrentDir dep = do 
-  currentDir <- decodeString <$> getCurrentDirectory 
+  currentDir <- getCurrentDirectory
   return $ depToRules currentDir dep
 
 depToRules :: FilePath -> Dep -> ([RuleIssue], [InternalRule])
 depToRules currentDir 
   = partitionEithers . map (toInternalRule currentDir) . runDep
-
-
-  
-
-
-
-  

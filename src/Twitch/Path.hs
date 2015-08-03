@@ -5,37 +5,38 @@
 {-# LANGUAGE MultiParamTypeClasses, TypeSynonymInstances, FlexibleInstances #-}
 
 module Twitch.Path
-       ( fp
-       , findFiles
+       ( findFiles
        , findDirs
        , findAllDirs
        , canonicalizeDirPath
        , canonicalizePath
        ) where
-import Filesystem.Path.CurrentOS ( FilePath, encodeString, decodeString, (</>) )
-import Prelude hiding (FilePath)
+import Control.Applicative -- satisfy GHC < 7.10
 import Control.Monad
-import qualified Filesystem as FS
-import qualified Filesystem.Path as FP
+import System.Directory
+  ( canonicalizePath
+  , doesDirectoryExist
+  , doesFileExist
+  , getDirectoryContents
+  )
+import System.FilePath
+  ( FilePath
+  , (</>)
+  , addTrailingPathSeparator
+  )
+-- Moved here to suppress redundant import warnings for GHC > 7.10
+import Prelude hiding (FilePath)
 
--- This will ensure than any calls to fp for type coercion in FSNotify will not
--- break when/if the dependent package moves from using String to the more
--- efficient Filesystem.Path.FilePath
-class ConvertFilePath a b where
-  fp :: a -> b
-instance ConvertFilePath FilePath String where fp   = encodeString
-instance ConvertFilePath String FilePath where fp   = decodeString
-instance ConvertFilePath String String where fp     = id
-instance ConvertFilePath FilePath FilePath where fp = id
 
 getDirectoryContentsPath :: FilePath -> IO [FilePath]
-getDirectoryContentsPath path = fmap (map (path </>)) $ FS.listDirectory path
+getDirectoryContentsPath path =
+  map (path </>) . filter (`notElem` [".", ".."]) <$> getDirectoryContents path
 
 fileDirContents :: FilePath -> IO ([FilePath],[FilePath])
 fileDirContents path = do
   contents <- getDirectoryContentsPath path
-  files <- filterM FS.isFile contents
-  dirs <- filterM FS.isDirectory contents
+  files <- filterM doesFileExist contents
+  dirs <- filterM doesDirectoryExist contents
   return (files, dirs)
 
 findAllFiles :: FilePath -> IO [FilePath]
@@ -45,11 +46,11 @@ findAllFiles path = do
   return (files ++ concat nestedFiles)
 
 findImmediateFiles, findImmediateDirs :: FilePath -> IO [FilePath]
-findImmediateFiles = getDirectoryContentsPath >=> filterM FS.isFile >=> canonicalize
+findImmediateFiles = getDirectoryContentsPath >=> filterM doesFileExist >=> canonicalize
   where
     canonicalize :: [FilePath] -> IO [FilePath]
-    canonicalize files = mapM FS.canonicalizePath files
-findImmediateDirs  = getDirectoryContentsPath >=> filterM FS.isDirectory >=> canonicalize
+    canonicalize files = mapM canonicalizePath files
+findImmediateDirs  = getDirectoryContentsPath >=> filterM doesDirectoryExist >=> canonicalize
   where
     canonicalize :: [FilePath] -> IO [FilePath]
     canonicalize dirs = mapM canonicalizeDirPath dirs
@@ -62,23 +63,13 @@ findAllDirs path = do
 
 findFiles :: Bool -> FilePath -> IO [FilePath]
 findFiles True path  = findAllFiles       =<< canonicalizeDirPath path
-findFiles False path = findImmediateFiles =<<  canonicalizeDirPath path
+findFiles False path = findImmediateFiles =<< canonicalizeDirPath path
 
 findDirs :: Bool -> FilePath -> IO [FilePath]
 findDirs True path  = findAllDirs       =<< canonicalizeDirPath path
 findDirs False path = findImmediateDirs =<< canonicalizeDirPath path
 
--- | add a trailing slash to ensure the path indicates a directory
-addTrailingSlash :: FilePath -> FilePath
-addTrailingSlash p =
- if FP.null (FP.filename p) then p else
-   p FP.</> FP.empty
 
 canonicalizeDirPath :: FilePath -> IO FilePath
-canonicalizeDirPath path = addTrailingSlash `fmap` FS.canonicalizePath path
+canonicalizeDirPath path = addTrailingPathSeparator <$> canonicalizePath path
 
--- | bugfix older version of canonicalizePath (system-fileio <= 0.3.7) loses trailing slash
-canonicalizePath :: FilePath -> IO FilePath
-canonicalizePath path = let was_dir = FP.null (FP.filename path) in
-  if not was_dir then FS.canonicalizePath path
-  else canonicalizeDirPath path
