@@ -27,9 +27,9 @@ description:
 homepage:            https://github.com/jfischoff/twitch
 license:             MIT
 license-file:        LICENSE
-author:              Jonathan Fischoff
+author:              Jonathan Fischoff, Andreas Schacker
 maintainer:          jonathangfischoff@gmail.com
-copyright: (c) Jonathan Fischoff 2014
+copyright: (c) Jonathan Fischoff 2015
 category:            System
 build-type:          Simple
 extra-source-files:  README.md
