@@ -14,15 +14,15 @@ whenever the input files change.
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}
 import Twitch
-import Filesystem.Path.CurrentOS
+import System.Process ( system )
 
 main = defaultMain $ do
-   "*.md"   |> \filePath -> system $ "pandoc -t html " ++ encodeString filePath
+   "*.md"   |> \filePath -> system $ "pandoc -t html " ++ filePath
    "*.html" |> \_ -> system $ "osascript refreshSafari.AppleScript"
 ```
 
 Rules are specified in the `Dep` (for Dependency) monad. The library takes advantage
-of the *OverloadedStrings* extension to create a Dep value from a glob pattern.
+of the *OverloadedStrings* extension to create a `Dep` value from a glob pattern.
 
 After creating a `Dep` value using a glob, event callbacks are added using prefix
 or infix API.
