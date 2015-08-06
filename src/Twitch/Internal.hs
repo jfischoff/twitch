@@ -1,7 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving      #-}
 {-# LANGUAGE OverloadedStrings               #-}
 {-# LANGUAGE FlexibleInstances               #-}
-{-# LANGUAGE LambdaCase                      #-}
 module Twitch.Internal where
 import System.FilePath ( FilePath )
 import Control.Monad.Trans.State as State
@@ -43,7 +42,7 @@ addRule r = DepM $ State.modify (r :)
 modHeadRule :: Dep -> (Rule -> Rule) -> Dep
 modHeadRule (DepM dep) f = DepM $ do
   dep
-  get >>= \case
+  get >>= \res -> case res of
     x:xs -> put $ f x : xs
     r    -> put r
 
