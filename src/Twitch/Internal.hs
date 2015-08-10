@@ -4,7 +4,7 @@
 module Twitch.Internal where
 import System.FilePath ( FilePath )
 import Control.Monad.Trans.State as State
-    ( State, put, modify, execState )
+    ( State, put, modify, execState, get )
 import qualified Twitch.Rule as Rule
     ( addF, modifyF, deleteF, nameF )
 import Twitch.Rule ( Rule )
@@ -40,9 +40,9 @@ addRule :: Rule -> Dep
 addRule r = DepM $ State.modify (r :)
 
 modHeadRule :: Dep -> (Rule -> Rule) -> Dep
-modHeadRule dep f = do 
-  let res = runDep dep
-  DepM $ case res of
+modHeadRule (DepM dep) f = DepM $ do
+  dep
+  get >>= \res -> case res of
     x:xs -> put $ f x : xs
     r    -> put r
 
