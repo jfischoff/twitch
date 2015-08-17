@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Tests.Twitch.Main where
 import Test.Hspec
-import Test.QuickCheck
 import Options.Applicative.Extra
 import Data.Monoid
 import Twitch.Main
@@ -64,7 +63,3 @@ tests = do
     it "parses the poll" $ do
       testParser usePolling "--should-poll" True      
       testParser usePolling "-p"     True
-
-      
-      
-    

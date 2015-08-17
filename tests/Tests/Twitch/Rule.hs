@@ -3,7 +3,6 @@
 module Tests.Twitch.Rule where
 import Test.Hspec
 import Twitch.Rule  
-import System.FilePath
 import Data.IORef
 import Data.Default
 
