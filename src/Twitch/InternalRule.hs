@@ -4,12 +4,15 @@ module Twitch.InternalRule where
 import System.FilePath ( FilePath )
 import Data.Time.Clock ( UTCTime )
 import System.FSNotify
-    ( Event(..),
-      WatchConfig,
-      watchDir,
-      startManagerConf,
-      WatchManager,
-      defaultConfig )
+  ( Event(..)
+  , WatchConfig
+  , WatchManager
+  , defaultConfig
+  , eventPath
+  , eventTime
+  , startManagerConf
+  , watchDir
+  )
 import Data.Default ( Default(..) )
 import Control.Monad ( when, void, forM_ )
 import Data.Monoid
@@ -92,20 +95,6 @@ data Issue
   -- ^ logged every time an rule is fired
   deriving Show
 
--- | Retrieve the filePath of an Event
-filePath :: Event -> FilePath
-filePath e = case e of
-  Added    x _ -> x
-  Modified x _ -> x
-  Removed  x _ -> x
-
--- | Retrieve the time of an Event
-time :: Event -> UTCTime
-time e = case e of
-  Added    _ x -> x
-  Modified _ x -> x
-  Removed  _ x -> x
-
 -- | Run the Rule action associated with the an event 
 fireRule :: Event -> InternalRule -> IO ()
 fireRule event rule = case event of
@@ -116,7 +105,7 @@ fireRule event rule = case event of
 -- | Test to see if the rule should fire and fire it
 testAndFireRule :: Config -> Event -> InternalRule -> IO ()
 testAndFireRule Config {..} event rule = do
-  let shouldFire = fileTest rule (filePath event) (time event)
+  let shouldFire = fileTest rule (eventPath event) (eventTime event)
   when shouldFire $ do 
     logger $ IRuleFired event rule
     fireRule event rule 
