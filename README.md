@@ -17,8 +17,8 @@ import Twitch
 import System.Process ( system )
 
 main = defaultMain $ do
-   "*.md"   |> \filePath -> system $ "pandoc -t html " ++ filePath
-   "*.html" |> \_ -> system $ "osascript refreshSafari.AppleScript"
+   "*.md"   |> \filePath -> system ("pandoc -t html " ++ filePath)
+   "*.html" |> \_ -> system "osascript refreshSafari.AppleScript"
 ```
 
 Rules are specified in the `Dep` (for Dependency) monad. The library takes advantage
