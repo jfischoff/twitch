@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                twitch
-version:             0.1.7.0
+version:             0.1.7.1
 synopsis:            A high level file watcher DSL
 description:
  Twitch is a monadic DSL and library for file watching.
@@ -57,7 +57,7 @@ library
                   , MultiParamTypeClasses
                   , TypeSynonymInstances
                   , TemplateHaskell
-  build-depends: base >=4.5 && <4.9
+  build-depends: base >=4.5 && <5.0
                , directory
                , filepath
                , transformers 
