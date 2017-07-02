@@ -67,3 +67,5 @@ main = defaultMain $ do
    "*.md"    |> [s|pandoc -t html -o$directory$basename-test.html $path|]
    "*.html"  |> [s|osascript refreshSafari.AppleScript|]
 ```
+
+For an alternative command line interface take a look at [twitch-cli](https://github.com/grafted-in/twitch-cli)
