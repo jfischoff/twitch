@@ -105,7 +105,7 @@ import Twitch.Internal
 import Twitch.InternalRule ( Config(..), Issue(..), InternalRule )
 import Twitch.Main
     ( DebounceType(..),
-      Options(Options, debounce, debounceAmount, root,
+      Options(Options, debounce, debounceAmount, root, log,
               logFile, pollInterval, recurseThroughDirectories, usePolling),
       LoggerType(..),
       defaultMain,
