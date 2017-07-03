@@ -2,6 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Twitch.Main where
 import Control.Applicative -- satisfy GHC < 7.10
+import Control.Concurrent ( threadDelay )
+import Control.Exception ( finally )
 import Data.Monoid
 import Options.Applicative
   ( Parser
@@ -45,7 +47,7 @@ import System.FilePath
   , isRelative
   , isValid
   )
-import Control.Monad ( liftM )
+import Control.Monad ( forever, liftM )
 -- Moved here to suppress redundant import warnings for GHC > 7.10
 import Prelude hiding (log, FilePath)
 -- parse the command line
@@ -263,8 +265,9 @@ defaultMainWithOptions :: Options -> Dep -> IO ()
 defaultMainWithOptions options dep = do
   (root, config, mhandle) <- optionsToConfig options
   manager <- runWithConfig root config dep
-  putStrLn "Type anything to quit"
-  _ <- getLine
-  for_ mhandle hClose
-  FS.stopManager manager
+  putStrLn "Type Ctrl+C to quit"
+  forever (threadDelay maxBound)
+    `finally` do
+      for_ mhandle hClose
+      FS.stopManager manager
 
