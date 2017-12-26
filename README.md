@@ -45,7 +45,26 @@ handleHaskellFiles :: Dep
 handleHaskellFiles = "src/**/*.hs" |+ addToCabalFile |% reloadFile |- removeFromCabalFile
 ```
 
-The glob above is also more complicated and incorporates a recursive wildcard. For
+Here is another complex example, using the named `addModify` and `delete` callbacks
+to the same function, which build a pdf and a Word document using pandoc, and
+refreshes a mupdf window.
+
+```haskell
+buildPDFandWordandRefreshWindow _ = do
+  pdfLatexCode <- system "pdflatex --interaction errorstopmode -file-line-error -halt-on-error document.tex"
+  (pandocCode,pandocOut,pandocErr) <- readProcessWithExitCode "pandoc" [ "--from=latex" , "--to=docx" , "document.tex" , "-o" , "document.docx" ] ""
+  (xwininfoCode,xwininfoOut,xwininfoErr) <- readProcessWithExitCode "xwininfo" ["-root", "-int", "-all"] ""
+  let windowId = head . words . head . filter (isInfixOf "document") $ lines xwininfoOut
+  (xDoToolCode,xDoToolOut,xDoToolErr) <- readProcessWithExitCode "xdotool" ["key", "--window", windowId, "r"] ""
+  return ()
+
+main :: IO ()
+main = defaultMain $ do
+  addModify buildPDFandWordandRefreshWindow "src/**/*.tex"
+  delete    buildPDFandWordandRefreshWindow "src/**/*.tex"
+```
+
+The globs in the above two examples are also more complicated and incorporate recursive wildcards. For
 complete documentation on the glob syntax, consult the
 [Glob](https://hackage.haskell.org/package/Glob-0.7.5/docs/System-FilePath-Glob.html#v:compile)
 library's documentation.
