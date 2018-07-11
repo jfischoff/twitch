@@ -11,6 +11,7 @@ import Twitch.Rule ( Rule )
 import Data.String ( IsString(..) )
 import Control.Applicative -- satisfy GHC < 7.10
 import Data.Monoid         -- satisfy GHC < 7.10
+import Data.Semigroup as S -- satisfy GHC < 8.0
 import Prelude hiding (FilePath)
 
 -- | A polymorphic 'Dep'. Exported for completeness, ignore. 
@@ -20,9 +21,12 @@ newtype DepM a = DepM { unDepM :: State [Rule] a}
            , Monad
            )
 
+instance S.Semigroup (DepM a) where
+  x <> y = x >> y
+
 instance Monoid a => Monoid (DepM a) where
   mempty = return mempty
-  mappend x y = x >> y
+  mappend = (<>)
 
 -- | This is the key type of the package, it is where rules are accumulated.
 type Dep = DepM ()
