@@ -1,5 +1,6 @@
 .stack-work/
 dist/
+dist-newstyle/
 .hsenv/
 docs
 wiki
