@@ -90,16 +90,6 @@ data Options = Options
   -- ^ If true, main will recurse through all subdirectories of the 'dirsToWatch'
   --   field. Otherwise the 'dirsToWatch' will be used literally.
   --   By default this is true, and disabled with the --no-recurse-flag .
-  , debounce                  :: DebounceType
-  -- ^ This corresponds to the debounce type used in the fsnotify library
-  --   The argument for default main is --debounce or -b .
-  --   Valid options are "DebounceDefault", "Debounce", "NoDebounce".
-  --   If "Debounce" is used, then a debounce amount must be specified with the
-  --   'debounceAmount'.
-  , debounceAmount            :: Double
-  -- ^ The amount to debounce. This is only meaningful when 'debounce' is set
-  --   to 'Debounce'.
-  --   It corresponds to the --debounce-amount or -a argument.
   , pollInterval              :: Int
   -- ^ poll interval if polling is used.
   --   This corresponds to the --poll-interval or -i argument.
@@ -107,12 +97,6 @@ data Options = Options
   -- ^ Sets polling to true if used.
   --   This corresponds to the --should-poll or -p flag.
   }
-
-data DebounceType
-  = DebounceDefault
-  | Debounce
-  | NoDebounce
-  deriving (Eq, Show, Read, Ord)
 
 -- use the new vinyl for the options
 -- the you get the monoid instance for free
@@ -123,8 +107,6 @@ instance Default Options where
     , logFile                   = Nothing
     , root                      = Nothing
     , recurseThroughDirectories = True
-    , debounce                  = DebounceDefault
-    , debounceAmount            = 0
     , pollInterval              = 10^(6 :: Int) -- 1 second
     , usePolling                = False
     }
@@ -177,20 +159,6 @@ pOptions
        <> help "flag to turn off recursing"
         )
   <*> option auto
-        ( long "debounce"
-       <> short 'b'
-       <> metavar "DEBOUNCE"
-       <> help "Type of debouncing. Valid choices are DebounceDefault | Debounce | NoDebounce"
-       <> value (debounce def)
-        )
-  <*> option auto
-        ( long "debounce-amount"
-       <> short 'a'
-       <> metavar "DEBOUNCE_AMOUNT"
-       <> help "Target for the greeting"
-       <> value (debounceAmount def)
-        )
-  <*> option auto
         ( long "poll-interval"
        <> short 'i'
        <> metavar "POLL_INTERVAL"
@@ -204,12 +172,6 @@ pOptions
         )
 
 -- This is like run, but the config params can be over written from the defaults
-
-toDB :: Real a => a -> DebounceType -> FS.Debounce
-toDB amount dbtype = case dbtype of
-  DebounceDefault -> FS.DebounceDefault
-  Debounce        -> FS.Debounce $ fromRational $ toRational amount
-  NoDebounce      -> FS.NoDebounce
 
 makeAbsolute :: FilePath -> FilePath -> FilePath
 makeAbsolute currentDir path = 
@@ -229,10 +191,12 @@ optionsToConfig Options {..} = do
                  else
                    return [root']
 
-  let watchConfig = FS.WatchConfig
-        { FS.confDebounce     = toDB debounceAmount debounce
-        , FS.confPollInterval = pollInterval
-        , FS.confUsePolling   = usePolling
+  let watchConfig = FS.defaultConfig
+        { FS.confThreadingMode      = FS.SingleThread
+        , FS.confWatchMode          = if usePolling 
+            then FS.WatchModePoll { FS.watchModePollInterval = pollInterval } 
+            else FS.WatchModeOS
+        , FS.confOnHandlerException = const $ pure ()
         }
 
   let config = IR.Config

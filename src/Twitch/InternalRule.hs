@@ -98,10 +98,13 @@ data Issue
 -- | Run the Rule action associated with the an event 
 fireRule :: Event -> InternalRule -> IO ()
 fireRule event rule = case event of
-  Added    file tyme _ -> modify rule file tyme
-  Modified file tyme _ -> add    rule file tyme
-  Removed  file tyme _ -> delete rule file tyme
-  Unknown  _    _    _ -> pure ()
+  Added                   file tyme _ -> modify rule file tyme
+  Modified                file tyme _ -> add    rule file tyme
+  Removed                 file tyme _ -> delete rule file tyme
+  WatchedDirectoryRemoved file tyme _ -> delete rule file tyme
+  ModifiedAttributes{}                -> pure ()
+  CloseWrite{}                        -> pure ()
+  Unknown{}                           -> pure ()
 
 -- | Test to see if the rule should fire and fire it
 testAndFireRule :: Config -> Event -> InternalRule -> IO ()
