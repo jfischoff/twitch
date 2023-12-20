@@ -42,19 +42,6 @@ tests = do
     it "parses the recurse option" $ do
       testParser recurseThroughDirectories "--no-recurse" False
       testParser recurseThroughDirectories "-n"  False
-
-    it "parses the debounce option" $ do
-      testParser debounce "--debounce=DebounceDefault" DebounceDefault
-      testParser debounce "--debounce=Debounce"        Debounce
-      testParser debounce "--debounce=NoDebounce"      NoDebounce
-    
-      testParser debounce "-bDebounceDefault" DebounceDefault
-      testParser debounce "-bDebounce"        Debounce
-      testParser debounce "-bNoDebounce"      NoDebounce
-    
-    it "parses the debounce-amount option" $ do
-      testParser debounceAmount "--debounce-amount=1.0" 1.0
-      testParser debounceAmount "-a1.0" 1.0
     
     it "parses the poll-interval" $ do
       testParser pollInterval "--poll-interval=1" 1

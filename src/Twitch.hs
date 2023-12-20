@@ -93,7 +93,6 @@ module Twitch
   , addModify
   , name
   -- * Advanced Main
-  , DebounceType (..)
   , LoggerType (..)
   , Options (..)
   , defaultMainWithOptions
@@ -123,8 +122,7 @@ import Twitch.Internal
       name )
 import Twitch.InternalRule ( Config(..), Issue(..), InternalRule )
 import Twitch.Main
-    ( DebounceType(..),
-      Options(Options, debounce, debounceAmount, root, log,
+    ( Options(Options, root, log,
               logFile, pollInterval, recurseThroughDirectories, usePolling),
       LoggerType(..),
       defaultMain,
